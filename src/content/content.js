@@ -25,6 +25,24 @@ class PomodoroTimer {
       longBreak: 15,    // 15 minutes
       sessionsUntilLongBreak: 4
     };
+
+    /** @type {Object} Deep work settings */
+    this.deepWorkSettings = {
+      minimalMode: false,
+      invisibleMode: false,
+      distractionShield: false,
+      singleTaskLock: false,
+      focusQualityTracking: true
+    };
+
+    /** @type {Object} Deep work state */
+    this.deepWorkState = {
+      currentFocusSession: null,
+      lockedTask: null,
+      focusQualityScore: 0,
+      interruptionCount: 0,
+      deepWorkStreak: 0
+    };
     
     this.init();
   }
@@ -32,6 +50,7 @@ class PomodoroTimer {
   async init() {
     await this.loadSettings();
     await this.loadTaskHistory();
+    await this.loadDeepWorkSettings();
 
     this.setupAudio();
     this.setupMessageListener();
@@ -83,6 +102,25 @@ class PomodoroTimer {
       await chrome.storage.local.set({ taskHistory: historyObject });
     } catch (error) {
       console.warn('Failed to save task history:', error);
+    }
+  }
+  
+  async loadDeepWorkSettings() {
+    try {
+      const result = await chrome.storage.sync.get(['deepWorkSettings']);
+      if (result.deepWorkSettings) {
+        this.deepWorkSettings = { ...this.deepWorkSettings, ...result.deepWorkSettings };
+      }
+    } catch (error) {
+      console.warn('Failed to load deep work settings:', error);
+    }
+  }
+  
+  async saveDeepWorkSettings() {
+    try {
+      await chrome.storage.sync.set({ deepWorkSettings: this.deepWorkSettings });
+    } catch (error) {
+      console.warn('Failed to save deep work settings:', error);
     }
   }
   
@@ -324,8 +362,34 @@ class PomodoroTimer {
     this.timerWidget = document.createElement('div');
     this.timerWidget.className = 'pomodoro-timer-widget';
     
-    // Create compact sidebar layout
-    this.timerWidget.innerHTML = `
+    // Add deep work mode classes
+    if (this.deepWorkSettings.minimalMode) {
+      this.timerWidget.classList.add('deep-work-minimal');
+    }
+    if (this.deepWorkSettings.invisibleMode) {
+      this.timerWidget.classList.add('deep-work-invisible');
+    }
+    
+    // Create layout based on mode
+    if (this.deepWorkSettings.minimalMode) {
+      this.timerWidget.innerHTML = this.createMinimalLayout();
+    } else {
+      this.timerWidget.innerHTML = this.createStandardLayout();
+    }
+    
+    this.positionWidget();
+    
+    // Ensure highlighting is applied after widget creation
+    setTimeout(() => {
+      const dropdown = this.timerWidget?.querySelector('.pomodoro-task-dropdown');
+      if (dropdown && dropdown.value) {
+        this.highlightSelectedTask(dropdown.value);
+      }
+    }, 200);
+  }
+  
+  createStandardLayout() {
+    return `
       <div class="pomodoro-timer-content pomodoro-sidebar-layout">
         <div class="pomodoro-timer-circle-compact">
           <svg class="pomodoro-timer-progress" viewBox="0 0 36 36">
@@ -349,16 +413,23 @@ class PomodoroTimer {
         </div>
       </div>
     `;
-    
-    this.positionWidget();
-    
-    // Ensure highlighting is applied after widget creation
-    setTimeout(() => {
-      const dropdown = this.timerWidget?.querySelector('.pomodoro-task-dropdown');
-      if (dropdown && dropdown.value) {
-        this.highlightSelectedTask(dropdown.value);
-      }
-    }, 200);
+  }
+  
+  createMinimalLayout() {
+    return `
+      <div class="pomodoro-timer-content pomodoro-minimal-layout">
+        <div class="pomodoro-minimal-task">
+          <span class="pomodoro-task-name">Select a task</span>
+        </div>
+        <div class="pomodoro-minimal-time">25:00</div>
+        <div class="pomodoro-minimal-controls">
+          <button class="pomodoro-timer-btn pomodoro-timer-pause">Start</button>
+        </div>
+        <select class="pomodoro-task-dropdown pomodoro-minimal-dropdown">
+          <option value="">Select a task...</option>
+        </select>
+      </div>
+    `;
   }
   
   populateTaskDropdown() {
@@ -849,11 +920,17 @@ class PomodoroTimer {
     if (!this.timerWidget) return;
     
     const dropdown = this.timerWidget.querySelector('.pomodoro-task-dropdown');
-    const timeElement = this.timerWidget.querySelector('.pomodoro-timer-time');
-    const todayElement = this.timerWidget.querySelector('.pomodoro-timer-today');
     const pauseBtn = this.timerWidget.querySelector('.pomodoro-timer-pause');
-    const fillElement = this.timerWidget.querySelector('.pomodoro-timer-fill');
     const taskLabel = this.timerWidget.querySelector('.pomodoro-timer-task-label');
+    
+    // Get elements based on layout mode
+    const timeElement = this.deepWorkSettings.minimalMode 
+      ? this.timerWidget.querySelector('.pomodoro-minimal-time')
+      : this.timerWidget.querySelector('.pomodoro-timer-time');
+    
+    const todayElement = this.timerWidget.querySelector('.pomodoro-timer-today');
+    const fillElement = this.timerWidget.querySelector('.pomodoro-timer-fill');
+    const taskNameElement = this.timerWidget.querySelector('.pomodoro-task-name');
     
     // Remove all state classes
     this.timerWidget.classList.remove('state-idle', 'state-work', 'state-break', 'paused');
@@ -865,22 +942,35 @@ class PomodoroTimer {
       const timeDisplay = `${workMinutes.toString().padStart(2, '0')}:00`;
       timeElement.textContent = timeDisplay;
       
-      // Show task stats if a task is selected, otherwise show defaults
-      if (dropdown && dropdown.value) {
-        const taskId = this.generateTaskHash(dropdown.value);
-        const taskStats = this.getTaskStats(taskId);
-        todayElement.innerHTML = `Today <span class="pomodoro-timer-count">${taskStats.completedToday}</span>`;
-      } else {
-        todayElement.innerHTML = 'Today <span class="pomodoro-timer-count">0</span>';
+      // Update task name in minimal mode
+      if (this.deepWorkSettings.minimalMode && taskNameElement) {
+        if (dropdown && dropdown.value) {
+          taskNameElement.textContent = dropdown.value;
+        } else {
+          taskNameElement.textContent = 'Select a task';
+        }
+      }
+      
+      // Show task stats if not in minimal mode
+      if (!this.deepWorkSettings.minimalMode && todayElement) {
+        if (dropdown && dropdown.value) {
+          const taskId = this.generateTaskHash(dropdown.value);
+          const taskStats = this.getTaskStats(taskId);
+          todayElement.innerHTML = `Today <span class="pomodoro-timer-count">${taskStats.completedToday}</span>`;
+        } else {
+          todayElement.innerHTML = 'Today <span class="pomodoro-timer-count">0</span>';
+        }
       }
       
       pauseBtn.textContent = 'Start';
       pauseBtn.classList.add('primary');
-      fillElement.style.strokeDasharray = '0, 100';
+      if (fillElement) fillElement.style.strokeDasharray = '0, 100';
       
       // Show dropdown and label in idle state
-      dropdown.style.display = 'block';
-      dropdown.disabled = false;
+      if (dropdown) {
+        dropdown.style.display = 'block';
+        dropdown.disabled = false;
+      }
       if (taskLabel) taskLabel.style.display = 'block';
       
       // Reset task progress bar
@@ -913,16 +1003,30 @@ class PomodoroTimer {
     console.log('Timer display:', timeDisplay, 'minutes:', minutes, 'seconds:', seconds);
     
     timeElement.textContent = timeDisplay;
-    todayElement.innerHTML = `Today <span class="pomodoro-timer-count">${this.currentTimer.taskTodayPomodoros || 0}</span>`;
-    fillElement.style.strokeDasharray = `${circularProgress}, 100`;
+    
+    // Update task name in minimal mode
+    if (this.deepWorkSettings.minimalMode && taskNameElement) {
+      taskNameElement.textContent = this.currentTimer.taskName;
+    }
+    
+    // Update stats in standard mode
+    if (!this.deepWorkSettings.minimalMode && todayElement) {
+      todayElement.innerHTML = `Today <span class="pomodoro-timer-count">${this.currentTimer.taskTodayPomodoros || 0}</span>`;
+    }
+    
+    if (fillElement) {
+      fillElement.style.strokeDasharray = `${circularProgress}, 100`;
+    }
     
     // Update highlighted task progress bar (resets to 0% when paused)
     this.updateTaskProgressBar(taskProgress);
     
     // Keep dropdown visible but disabled when timer is active
-    dropdown.value = this.currentTimer.taskName;
-    dropdown.style.display = 'block';
-    dropdown.disabled = true;
+    if (dropdown) {
+      dropdown.value = this.currentTimer.taskName;
+      dropdown.style.display = 'block';
+      dropdown.disabled = true;
+    }
     
     // Hide task label when timer is running
     if (taskLabel) taskLabel.style.display = 'none';
@@ -1137,6 +1241,9 @@ class PomodoroTimer {
         break;
       case 'updateSettings':
         this.updateSettings(message.settings);
+        if (message.deepWorkSettings) {
+          this.updateDeepWorkSettings(message.deepWorkSettings);
+        }
         sendResponse({ success: true });
         break;
       case 'pauseTimer':
@@ -1176,6 +1283,18 @@ class PomodoroTimer {
     if (!this.currentTimer) {
       this.updateTimerWidget();
     }
+  }
+  
+  updateDeepWorkSettings(newSettings) {
+    console.log('Updating deep work settings:', newSettings);
+    this.deepWorkSettings = { ...this.deepWorkSettings, ...newSettings };
+    this.saveDeepWorkSettings();
+    
+    // Recreate timer widget with new mode
+    this.createTimerWidget();
+    this.bindTimerEvents();
+    this.populateTaskDropdown();
+    this.updateTimerWidget();
   }
   
   getTimerState() {

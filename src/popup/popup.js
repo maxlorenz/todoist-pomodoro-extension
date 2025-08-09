@@ -18,11 +18,19 @@ class PopupController {
       longBreak: 15,
       sessionsUntilLongBreak: 4
     };
+    
+    /** @type {Object} Deep work settings */
+    this.deepWorkSettings = {
+      minimalMode: false,
+      invisibleMode: false
+    };
+    
     this.init();
   }
 
   async init() {
     await this.loadSettings();
+    await this.loadDeepWorkSettings();
     this.bindUI();
   }
 
@@ -38,6 +46,17 @@ class PopupController {
       console.warn('Settings load failed:', e);
     }
   }
+  
+  async loadDeepWorkSettings() {
+    try {
+      const { deepWorkSettings } = await chrome.storage.sync.get(['deepWorkSettings']);
+      if (deepWorkSettings) {
+        this.deepWorkSettings = { ...this.deepWorkSettings, ...deepWorkSettings };
+      }
+    } catch (e) {
+      console.warn('Deep work settings load failed:', e);
+    }
+  }
 
   syncSettingsUI() {
     const S = this.settings;
@@ -45,6 +64,11 @@ class PopupController {
     document.getElementById('short-break').value = S.shortBreak;
     document.getElementById('long-break').value = S.longBreak;
     document.getElementById('sessions-until-long').value = S.sessionsUntilLongBreak;
+    
+    // Deep work settings
+    const DW = this.deepWorkSettings;
+    document.getElementById('minimal-mode').checked = DW.minimalMode;
+    document.getElementById('invisible-mode').checked = DW.invisibleMode;
   }
 
   async saveSettings() {
@@ -56,8 +80,19 @@ class PopupController {
         sessionsUntilLongBreak: parseInt(document.getElementById('sessions-until-long').value, 10)
       };
       
+      // Save deep work settings
+      this.deepWorkSettings = {
+        minimalMode: document.getElementById('minimal-mode').checked,
+        invisibleMode: document.getElementById('invisible-mode').checked
+      };
+      
       console.log('Saving settings:', this.settings);
-      await chrome.storage.sync.set({ pomodoroSettings: this.settings });
+      console.log('Saving deep work settings:', this.deepWorkSettings);
+      
+      await chrome.storage.sync.set({ 
+        pomodoroSettings: this.settings,
+        deepWorkSettings: this.deepWorkSettings
+      });
       console.log('Settings saved to storage');
       
       // Also update content script settings
@@ -67,7 +102,8 @@ class PopupController {
           console.log('Sending settings to content script:', this.settings);
           chrome.tabs.sendMessage(tabs[0].id, { 
             action: 'updateSettings', 
-            settings: this.settings 
+            settings: this.settings,
+            deepWorkSettings: this.deepWorkSettings
           });
         }
       } catch (e) {
