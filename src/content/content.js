@@ -411,6 +411,43 @@ class PomodoroTimer {
       </div>
     `;
     
+    this.positionWidget();
+    this.bindTimerEvents();
+  }
+    
+    this.timerWidget = document.createElement('div');
+    this.timerWidget.className = 'pomodoro-timer-widget';
+    this.timerWidget.innerHTML = `
+      <div class="pomodoro-timer-content">
+        <div class="pomodoro-timer-display">
+          <div class="pomodoro-timer-circle">
+            <svg class="pomodoro-timer-progress" viewBox="0 0 36 36">
+              <path class="pomodoro-timer-bg" d="M18 2.0845a15.9155 15.9155 0 1 1 0 31.831a15.9155 15.9155 0 1 1 0-31.831"/>
+              <path class="pomodoro-timer-fill" d="M18 2.0845a15.9155 15.9155 0 1 1 0 31.831a15.9155 15.9155 0 1 1 0-31.831"/>
+            </svg>
+            <div class="pomodoro-timer-time">25:00</div>
+          </div>
+        </div>
+        <div class="pomodoro-timer-controls">
+          <button class="pomodoro-timer-btn primary pomodoro-timer-pause">Start</button>
+          <button class="pomodoro-timer-btn pomodoro-timer-stop">Stop</button>
+        </div>
+        <div class="pomodoro-timer-task-selector">
+          <select class="pomodoro-task-dropdown">
+            <option value="">Select a task...</option>
+          </select>
+        </div>
+        <div class="pomodoro-timer-meta">
+          <div class="pomodoro-timer-task-info">
+            <div class="pomodoro-timer-task-name">Select task and click Start</div>
+            <div class="pomodoro-timer-stats">
+              <span class="pomodoro-timer-today">Today: 0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
     this.setupWidgetControls();
     this.positionWidget();
     document.body.appendChild(this.timerWidget);
@@ -597,10 +634,41 @@ class PomodoroTimer {
   }
   
   positionWidget() {
+    // Try to integrate into sidebar first
+    if (this.integrateSidebarWidget()) {
+      return;
+    }
+    
+    // Fallback to fixed positioning if sidebar integration fails
+    document.body.appendChild(this.timerWidget);
     this.timerWidget.style.position = 'fixed';
     this.timerWidget.style.top = '20px';
     this.timerWidget.style.right = '20px';
     this.timerWidget.style.zIndex = '10000';
+  }
+  
+  integrateSidebarWidget() {
+    // Find the sidebar navigation container
+    const sidebar = document.querySelector('nav.fyYNCjm');
+    if (!sidebar) return false;
+    
+    // Find the top menu (contains Inbox, Today, More)
+    const topMenu = sidebar.querySelector('#top-menu');
+    if (!topMenu) return false;
+    
+    // Find the My Projects section
+    const projectsSection = sidebar.querySelector('.om0jL2_');
+    if (!projectsSection) return false;
+    
+    // Create a container for the timer widget
+    const timerContainer = document.createElement('div');
+    timerContainer.className = 'pomodoro-sidebar-container';
+    timerContainer.appendChild(this.timerWidget);
+    
+    // Insert between top menu and projects section
+    projectsSection.parentNode.insertBefore(timerContainer, projectsSection);
+    
+    return true;
   }
   
   updateTimerWidget() {
