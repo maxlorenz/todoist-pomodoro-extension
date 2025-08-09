@@ -402,7 +402,6 @@ class PomodoroTimer {
             <div class="pomodoro-timer-task-name">Select task and click Start</div>
             <div class="pomodoro-timer-stats">
               <span class="pomodoro-timer-today">Today: 0</span>
-              <span class="pomodoro-timer-total">Total: 0</span>
             </div>
           </div>
         </div>
@@ -537,8 +536,16 @@ class PomodoroTimer {
       const selectedTask = dropdown.value;
       if (selectedTask) {
         this.highlightSelectedTask(selectedTask);
+        // Update task statistics when selection changes
+        if (!this.currentTimer) {
+          this.updateTimerWidget();
+        }
       } else {
         this.clearTaskHighlight();
+        // Update widget to show default state
+        if (!this.currentTimer) {
+          this.updateTimerWidget();
+        }
       }
     };
     
@@ -600,7 +607,6 @@ class PomodoroTimer {
     const timeElement = this.timerWidget.querySelector('.pomodoro-timer-time');
     const taskNameElement = this.timerWidget.querySelector('.pomodoro-timer-task-name');
     const todayElement = this.timerWidget.querySelector('.pomodoro-timer-today');
-    const totalElement = this.timerWidget.querySelector('.pomodoro-timer-total');
     const pauseBtn = this.timerWidget.querySelector('.pomodoro-timer-pause');
     const fillElement = this.timerWidget.querySelector('.pomodoro-timer-fill');
     
@@ -613,9 +619,16 @@ class PomodoroTimer {
       console.log('Idle state - work duration:', workMinutes, 'settings:', this.settings);
       const timeDisplay = `${workMinutes.toString().padStart(2, '0')}:00`;
       timeElement.textContent = timeDisplay;
-      taskNameElement.textContent = 'Select task and click Start';
-      todayElement.textContent = 'Today: 0';
-      totalElement.textContent = 'Total: 0';
+      // Show task stats if a task is selected, otherwise show defaults
+      if (dropdown && dropdown.value) {
+        const taskId = this.generateTaskHash(dropdown.value);
+        const taskStats = this.getTaskStats(taskId);
+        taskNameElement.textContent = dropdown.value;
+        todayElement.textContent = `Today: ${taskStats.completedToday}`;
+      } else {
+        taskNameElement.textContent = 'Select task and click Start';
+        todayElement.textContent = 'Today: 0';
+      }
       pauseBtn.textContent = 'Start';
       pauseBtn.classList.add('primary');
       fillElement.style.strokeDasharray = '0, 100';
@@ -645,8 +658,7 @@ class PomodoroTimer {
     timeElement.textContent = timeDisplay;
     taskNameElement.textContent = this.currentTimer.taskName;
     todayElement.textContent = `Today: ${this.currentTimer.taskTodayPomodoros || 0}`;
-    totalElement.textContent = `Total: ${this.currentTimer.taskTotalPomodoros || 0}`;
-    fillElement.style.strokeDasharray = `${progress}, 100`;
+    fillElement.style.opacity = progress > 0 ? '0.95' : '0';
     
     // Hide dropdown when timer is active, but ensure it has the correct value
     dropdown.value = this.currentTimer.taskName;
@@ -719,16 +731,9 @@ class PomodoroTimer {
         attempts++;
       }
       
-      // Apply highlighting
+      // Apply highlighting - just the visual styling, no content modification
       if (taskContainer) {
-        taskContainer.classList.add('pomodoro-selected-task', 'pomodoro-task-pulse');
-        
-        // Remove pulse animation after it completes
-        setTimeout(() => {
-          if (taskContainer.classList.contains('pomodoro-task-pulse')) {
-            taskContainer.classList.remove('pomodoro-task-pulse');
-          }
-        }, 1000);
+        taskContainer.classList.add('pomodoro-selected-task');
         
         // Scroll task into view
         taskContainer.scrollIntoView({ 
@@ -740,11 +745,13 @@ class PomodoroTimer {
     }
   }
   
+
+  
   clearTaskHighlight() {
     // Remove highlighting from all tasks
     const highlightedTasks = document.querySelectorAll('.pomodoro-selected-task');
     highlightedTasks.forEach(task => {
-      task.classList.remove('pomodoro-selected-task', 'pomodoro-task-pulse');
+      task.classList.remove('pomodoro-selected-task');
     });
   }
   
@@ -827,6 +834,7 @@ class PomodoroTimer {
   
   setupMessageListener() {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      console.log('Content script received message:', message);
       switch (message.action) {
         case 'getTimerState':
           sendResponse(this.getTimerState());
@@ -863,12 +871,19 @@ class PomodoroTimer {
   }
   
   updateSettings(newSettings) {
+    console.log('Updating settings:', newSettings);
     this.settings = {
       workDuration: newSettings.workDuration,
       shortBreak: newSettings.shortBreak,
       longBreak: newSettings.longBreak,
       sessionsUntilLongBreak: newSettings.sessionsUntilLongBreak
     };
+    console.log('New settings applied:', this.settings);
+    
+    // Update the timer widget to reflect new settings if idle
+    if (!this.currentTimer) {
+      this.updateTimerWidget();
+    }
   }
   
   getTimerState() {

@@ -81,7 +81,7 @@ body {
 }
 
 .popup {
-  width: 380px;
+  width: 320px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -112,20 +112,28 @@ body {
 }
 
 /* ============ Layout ============ */
-.main { padding: 16px; }
-.block + .block { margin-top: 16px; }
+.main { padding: 20px; }
 
-.block {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px;
+/* ============ Settings Section ============ */
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
-.block-title {
+
+.settings-title {
+  margin: 0;
+  font-size: 16px;
   font-weight: 600;
-  margin-bottom: 10px;
+  color: var(--text);
+  letter-spacing: 0.1px;
 }
-.right { display: flex; justify-content: flex-end; }
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
 .footer {
   padding: 12px 16px;
@@ -229,6 +237,35 @@ body {
 
 .small { padding: 6px 10px; font-weight: 600; }
 
+/* ============ Save Button ============ */
+.btn-save {
+  appearance: none;
+  border: none;
+  background: var(--accent);
+  color: #ffffff;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.15s ease, transform 0.02s ease;
+}
+
+.btn-save:hover {
+  background: var(--accent-600);
+}
+
+.btn-save:active {
+  background: var(--accent-700);
+  transform: translateY(1px);
+}
+
+.btn-save:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
 /* ============ Grid / Form ============ */
 .grid {
   display: grid;
@@ -237,9 +274,24 @@ body {
 }
 .grid .btn:last-child { grid-column: 1 / -1; }
 
-.form { display: grid; gap: 10px; }
-.field { display: grid; gap: 6px; }
-.field > span { font-weight: 500; }
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.field-help {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
 input[type="number"] {
   width: 100%;
   padding: 10px 12px;
@@ -247,8 +299,19 @@ input[type="number"] {
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
+  font-size: 14px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-input[type="number"]:focus { outline: none; box-shadow: var(--focus); border-color: var(--accent); }
+
+input[type="number"]:focus {
+  outline: none;
+  box-shadow: var(--focus);
+  border-color: var(--accent);
+}
+
+input[type="number"]:hover {
+  border-color: var(--muted);
+}
 
 /* ============ Task History ============ */
 .task-history {

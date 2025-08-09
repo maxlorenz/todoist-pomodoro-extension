@@ -46,22 +46,30 @@ class PopupController {
         sessionsUntilLongBreak: parseInt(document.getElementById('sessions-until-long').value, 10)
       };
       
+      console.log('Saving settings:', this.settings);
       await chrome.storage.sync.set({ pomodoroSettings: this.settings });
+      console.log('Settings saved to storage');
       
       // Also update content script settings
       try {
         const tabs = await chrome.tabs.query({ url: 'https://app.todoist.com/*' });
         if (tabs.length > 0) {
+          console.log('Sending settings to content script:', this.settings);
           chrome.tabs.sendMessage(tabs[0].id, { 
             action: 'updateSettings', 
             settings: this.settings 
           });
         }
       } catch (e) {
-        // Content script might not be loaded, that's ok
+        console.warn('Could not update content script:', e);
       }
       
       this.flashSaved();
+      
+      // Close popup after saving settings
+      setTimeout(() => {
+        window.close();
+      }, 800); // Wait a bit to show the "Saved" feedback
     } catch (error) {
       console.error('Failed to save settings:', error);
     }
@@ -77,16 +85,6 @@ class PopupController {
 
   // ---------- UI events ----------
   bindUI() {
-    document.getElementById('quick-25').addEventListener('click', () =>
-      this.startQuickTimer('Work Session', this.settings.workDuration * 60 * 1000)
-    );
-    document.getElementById('quick-5').addEventListener('click', () =>
-      this.startQuickTimer('Short Break', this.settings.shortBreak * 60 * 1000)
-    );
-    document.getElementById('quick-15').addEventListener('click', () =>
-      this.startQuickTimer('Long Break', this.settings.longBreak * 60 * 1000)
-    );
-
     document.getElementById('save-settings').addEventListener('click', () => this.saveSettings());
 
     // Save on Enter in any settings input
