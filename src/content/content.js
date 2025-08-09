@@ -18,6 +18,17 @@ class PomodoroTimer {
     /** @type {AudioContext|null} Web Audio API context for sound effects */
     this.audioContext = null;
 
+    /** @type {Object} Gamification data */
+    this.gamification = {
+      xp: 0,
+      level: 1,
+      currentStreak: 0,
+      longestStreak: 0,
+      lastSessionDate: null,
+      achievements: new Set(),
+      totalSessions: 0
+    };
+
     /** @type {Object} Timer configuration settings */
     this.settings = {
       workDuration: 25, // 25 minutes
@@ -32,6 +43,7 @@ class PomodoroTimer {
   async init() {
     await this.loadSettings();
     await this.loadTaskHistory();
+    await this.loadGamificationData();
 
     this.setupAudio();
     this.setupMessageListener();
@@ -84,6 +96,496 @@ class PomodoroTimer {
     } catch (error) {
       console.warn('Failed to save task history:', error);
     }
+  }
+  
+  async loadGamificationData() {
+    try {
+      const result = await chrome.storage.local.get(['gamificationData']);
+      if (result.gamificationData) {
+        this.gamification = { 
+          ...this.gamification, 
+          ...result.gamificationData,
+          achievements: new Set(result.gamificationData.achievements || [])
+        };
+      }
+    } catch (error) {
+      console.warn('Failed to load gamification data:', error);
+    }
+  }
+  
+  async saveGamificationData() {
+    try {
+      const gamificationData = {
+        ...this.gamification,
+        achievements: Array.from(this.gamification.achievements)
+      };
+      await chrome.storage.local.set({ gamificationData });
+    } catch (error) {
+      console.warn('Failed to save gamification data:', error);
+    }
+  }
+  
+  // ========== GAMIFICATION SYSTEM ==========
+  
+  updateGamificationOnCompletion() {
+    const today = new Date().toDateString();
+    const wasYesterday = this.gamification.lastSessionDate === this.getYesterday();
+    const wasToday = this.gamification.lastSessionDate === today;
+    
+    // Update streak
+    if (wasToday) {
+      // Same day, streak continues
+    } else if (wasYesterday) {
+      // Consecutive day, increment streak
+      this.gamification.currentStreak++;
+    } else {
+      // Streak broken, reset to 1
+      this.gamification.currentStreak = 1;
+    }
+    
+    // Update longest streak
+    if (this.gamification.currentStreak > this.gamification.longestStreak) {
+      this.gamification.longestStreak = this.gamification.currentStreak;
+    }
+    
+    // Update session data
+    this.gamification.lastSessionDate = today;
+    this.gamification.totalSessions++;
+    
+    // Add XP (25 base + 5 per streak day)
+    const xpGained = 25 + (this.gamification.currentStreak * 5);
+    this.gamification.xp += xpGained;
+    
+    // Check for level up
+    const newLevel = Math.floor(this.gamification.xp / 100) + 1;
+    const leveledUp = newLevel > this.gamification.level;
+    this.gamification.level = newLevel;
+    
+    // Check achievements
+    this.checkAchievements();
+    
+    // Show celebration
+    this.showGamificationCelebration(xpGained, leveledUp);
+    
+    // Save data
+    this.saveGamificationData();
+  }
+  
+  getYesterday() {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return yesterday.toDateString();
+  }
+  
+  checkAchievements() {
+    const achievements = [
+      { id: 'first_session', name: 'First Steps', condition: () => this.gamification.totalSessions >= 1 },
+      { id: 'streak_3', name: 'Getting Started', condition: () => this.gamification.currentStreak >= 3 },
+      { id: 'streak_7', name: 'Week Warrior', condition: () => this.gamification.currentStreak >= 7 },
+      { id: 'streak_30', name: 'Month Master', condition: () => this.gamification.currentStreak >= 30 },
+      { id: 'sessions_10', name: 'Focused Ten', condition: () => this.gamification.totalSessions >= 10 },
+      { id: 'sessions_50', name: 'Half Century', condition: () => this.gamification.totalSessions >= 50 },
+      { id: 'sessions_100', name: 'Centurion', condition: () => this.gamification.totalSessions >= 100 },
+      { id: 'level_5', name: 'Rising Star', condition: () => this.gamification.level >= 5 },
+      { id: 'level_10', name: 'Focus Master', condition: () => this.gamification.level >= 10 }
+    ];
+    
+    achievements.forEach(achievement => {
+      if (!this.gamification.achievements.has(achievement.id) && achievement.condition()) {
+        this.gamification.achievements.add(achievement.id);
+        this.showAchievementUnlocked(achievement.name);
+      }
+    });
+  }
+  
+  showGamificationCelebration(xpGained, leveledUp) {
+    const streakEmoji = this.getStreakEmoji();
+    let message = `+${xpGained} XP! ${streakEmoji} ${this.gamification.currentStreak} day streak`;
+    
+    if (leveledUp) {
+      message += ` 🎉 LEVEL UP! You're now level ${this.gamification.level}!`;
+    }
+    
+    this.showTemporaryMessage(message, 'celebration');
+  }
+  
+  showAchievementUnlocked(achievementName) {
+    this.showTemporaryMessage(`🏆 Achievement Unlocked: ${achievementName}!`, 'achievement');
+  }
+  
+  getStreakEmoji() {
+    const streak = this.gamification.currentStreak;
+    if (streak >= 30) return '🔥🔥🔥';
+    if (streak >= 7) return '🔥🔥';
+    if (streak >= 3) return '🔥';
+    return '✨';
+  }
+  
+  showTemporaryMessage(message, type = 'info') {
+    const messageEl = document.createElement('div');
+    messageEl.className = `pomodoro-temp-message pomodoro-temp-${type}`;
+    messageEl.textContent = message;
+    
+    // Style the message
+    Object.assign(messageEl.style, {
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      background: type === 'celebration' ? 'linear-gradient(135deg, #ff6b6b, #feca57)' : 
+        type === 'achievement' ? 'linear-gradient(135deg, #5f27cd, #00d2d3)' : '#333',
+      color: 'white',
+      padding: '12px 20px',
+      borderRadius: '8px',
+      fontSize: '14px',
+      fontWeight: 'bold',
+      zIndex: '10001',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+      animation: 'pomodoroSlideIn 0.3s ease-out',
+      maxWidth: '300px',
+      wordWrap: 'break-word'
+    });
+    
+    document.body.appendChild(messageEl);
+    
+    // Remove after 4 seconds
+    setTimeout(() => {
+      messageEl.style.animation = 'pomodoroSlideOut 0.3s ease-in';
+      setTimeout(() => messageEl.remove(), 300);
+    }, 4000);
+  }
+  
+  showBreathingGuide() {
+    // Create breathing guide overlay
+    const breathingOverlay = document.createElement('div');
+    breathingOverlay.className = 'pomodoro-breathing-overlay';
+    breathingOverlay.innerHTML = `
+      <div class="pomodoro-breathing-content">
+        <div class="pomodoro-breathing-circle"></div>
+        <div class="pomodoro-breathing-text">
+          <h3>Take a Deep Breath</h3>
+          <p class="pomodoro-breathing-instruction">Breathe in...</p>
+          <button class="pomodoro-breathing-close">Skip</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(breathingOverlay);
+    
+    // Start breathing animation
+    this.startBreathingAnimation(breathingOverlay);
+    
+    // Auto-close after 30 seconds or when clicked
+    const closeBtn = breathingOverlay.querySelector('.pomodoro-breathing-close');
+    const autoClose = setTimeout(() => {
+      this.closeBreathingGuide(breathingOverlay);
+    }, 30000);
+    
+    closeBtn.addEventListener('click', () => {
+      clearTimeout(autoClose);
+      this.closeBreathingGuide(breathingOverlay);
+    });
+  }
+  
+  startBreathingAnimation(overlay) {
+    const circle = overlay.querySelector('.pomodoro-breathing-circle');
+    const instruction = overlay.querySelector('.pomodoro-breathing-instruction');
+    let phase = 'inhale'; // inhale, hold, exhale, hold
+    let cycle = 0;
+    
+    const breathingCycle = () => {
+      switch (phase) {
+      case 'inhale':
+        circle.style.transform = 'scale(1.5)';
+        instruction.textContent = 'Breathe in...';
+        setTimeout(() => {
+          phase = 'hold1';
+          breathingCycle();
+        }, 4000);
+        break;
+      case 'hold1':
+        instruction.textContent = 'Hold...';
+        setTimeout(() => {
+          phase = 'exhale';
+          breathingCycle();
+        }, 2000);
+        break;
+      case 'exhale':
+        circle.style.transform = 'scale(1)';
+        instruction.textContent = 'Breathe out...';
+        setTimeout(() => {
+          phase = 'hold2';
+          breathingCycle();
+        }, 4000);
+        break;
+      case 'hold2':
+        instruction.textContent = 'Hold...';
+        setTimeout(() => {
+          cycle++;
+          if (cycle < 3) { // 3 breathing cycles
+            phase = 'inhale';
+            breathingCycle();
+          } else {
+            instruction.textContent = 'Great! You\'re refreshed.';
+            setTimeout(() => {
+              this.closeBreathingGuide(overlay);
+            }, 2000);
+          }
+        }, 2000);
+        break;
+      }
+    };
+    
+    breathingCycle();
+  }
+  
+  closeBreathingGuide(overlay) {
+    overlay.style.animation = 'pomodoroFadeOut 0.3s ease-in';
+    setTimeout(() => {
+      overlay.remove();
+    }, 300);
+  }
+  
+  applySeasonalTheme() {
+    if (!this.timerWidget) return;
+    
+    const season = this.getCurrentSeason();
+    const seasonalColors = this.getSeasonalColors(season);
+    
+    // Apply seasonal CSS variables
+    Object.entries(seasonalColors).forEach(([property, value]) => {
+      this.timerWidget.style.setProperty(property, value);
+    });
+    
+    // Add seasonal class
+    this.timerWidget.classList.remove('season-spring', 'season-summer', 'season-autumn', 'season-winter');
+    this.timerWidget.classList.add(`season-${season}`);
+  }
+  
+  getCurrentSeason() {
+    const now = new Date();
+    const month = now.getMonth() + 1; // 1-12
+    const day = now.getDate();
+    
+    // Northern hemisphere seasons
+    if ((month === 12 && day >= 21) || month <= 2 || (month === 3 && day < 20)) {
+      return 'winter';
+    } else if ((month === 3 && day >= 20) || month <= 5 || (month === 6 && day < 21)) {
+      return 'spring';
+    } else if ((month === 6 && day >= 21) || month <= 8 || (month === 9 && day < 22)) {
+      return 'summer';
+    } else {
+      return 'autumn';
+    }
+  }
+  
+  getSeasonalColors(season) {
+    const themes = {
+      spring: {
+        '--seasonal-accent': '#10b981', // Fresh green
+        '--seasonal-bg': 'linear-gradient(135deg, #f0fdf4, #dcfce7)',
+        '--seasonal-border': '#bbf7d0',
+        '--seasonal-text': '#065f46'
+      },
+      summer: {
+        '--seasonal-accent': '#f59e0b', // Warm orange
+        '--seasonal-bg': 'linear-gradient(135deg, #fffbeb, #fef3c7)',
+        '--seasonal-border': '#fed7aa',
+        '--seasonal-text': '#92400e'
+      },
+      autumn: {
+        '--seasonal-accent': '#dc2626', // Rich red
+        '--seasonal-bg': 'linear-gradient(135deg, #fef2f2, #fee2e2)',
+        '--seasonal-border': '#fecaca',
+        '--seasonal-text': '#991b1b'
+      },
+      winter: {
+        '--seasonal-accent': '#3b82f6', // Cool blue
+        '--seasonal-bg': 'linear-gradient(135deg, #eff6ff, #dbeafe)',
+        '--seasonal-border': '#bfdbfe',
+        '--seasonal-text': '#1e40af'
+      }
+    };
+    
+    return themes[season] || themes.spring;
+  }
+  
+  initParticleSystem() {
+    if (!this.timerWidget) return;
+    
+    const canvas = this.timerWidget.querySelector('.pomodoro-particles-canvas');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const rect = this.timerWidget.getBoundingClientRect();
+    
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    
+    this.particles = [];
+    this.particleCtx = ctx;
+    this.particleCanvas = canvas;
+    
+    // Create initial particles
+    for (let i = 0; i < 8; i++) {
+      this.particles.push(this.createParticle());
+    }
+    
+    // Start animation
+    this.animateParticles();
+  }
+  
+  createParticle() {
+    const canvas = this.particleCanvas;
+    if (!canvas) return null;
+    
+    return {
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: (Math.random() - 0.5) * 0.5,
+      size: Math.random() * 2 + 1,
+      opacity: Math.random() * 0.3 + 0.1,
+      life: Math.random() * 200 + 100
+    };
+  }
+  
+  animateParticles() {
+    if (!this.particleCtx || !this.particleCanvas) return;
+    
+    const ctx = this.particleCtx;
+    const canvas = this.particleCanvas;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Get productivity intensity (more particles when working)
+    const intensity = this.getProductivityIntensity();
+    
+    // Update and draw particles
+    this.particles = this.particles.filter(particle => {
+      if (!particle) return false;
+      
+      // Update position
+      particle.x += particle.vx * intensity;
+      particle.y += particle.vy * intensity;
+      particle.life--;
+      
+      // Wrap around edges
+      if (particle.x < 0) particle.x = canvas.width;
+      if (particle.x > canvas.width) particle.x = 0;
+      if (particle.y < 0) particle.y = canvas.height;
+      if (particle.y > canvas.height) particle.y = 0;
+      
+      // Draw particle
+      ctx.save();
+      ctx.globalAlpha = particle.opacity * (particle.life / 200);
+      ctx.fillStyle = this.getParticleColor();
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      
+      return particle.life > 0;
+    });
+    
+    // Add new particles based on intensity
+    while (this.particles.length < Math.floor(intensity * 12)) {
+      this.particles.push(this.createParticle());
+    }
+    
+    // Continue animation
+    requestAnimationFrame(() => this.animateParticles());
+  }
+  
+  getProductivityIntensity() {
+    if (this.currentTimer && this.currentTimer.status === 'running') {
+      if (this.currentTimer.type === 'work') {
+        return 1.5; // High intensity during work
+      } else {
+        return 0.8; // Medium intensity during breaks
+      }
+    }
+    return 0.3; // Low intensity when idle
+  }
+  
+  getParticleColor() {
+    const season = this.getCurrentSeason();
+    const colors = {
+      spring: '#10b981',
+      summer: '#f59e0b',
+      autumn: '#dc2626',
+      winter: '#3b82f6'
+    };
+    return colors[season] || '#6b7280';
+  }
+  
+  updateMoodRing(event) {
+    // Track recent completion patterns for mood ring
+    if (!this.gamification.recentSessions) {
+      this.gamification.recentSessions = [];
+    }
+    
+    const now = Date.now();
+    this.gamification.recentSessions.push({
+      timestamp: now,
+      event, // 'completed', 'interrupted', 'skipped'
+      type: this.currentTimer?.type || 'work'
+    });
+    
+    // Keep only last 10 sessions
+    this.gamification.recentSessions = this.gamification.recentSessions.slice(-10);
+    
+    // Update timer colors based on mood
+    this.applyMoodRingColors();
+  }
+  
+  applyMoodRingColors() {
+    if (!this.timerWidget || !this.gamification.recentSessions) return;
+    
+    const completionRate = this.getRecentCompletionRate();
+    const moodColor = this.getMoodColor(completionRate);
+    
+    // Apply mood color to timer elements
+    const fillElement = this.timerWidget.querySelector('.pomodoro-timer-fill');
+    const levelBadge = this.timerWidget.querySelector('.pomodoro-level-badge');
+    
+    if (fillElement) {
+      fillElement.style.stroke = moodColor;
+    }
+    
+    if (levelBadge) {
+      levelBadge.style.background = `linear-gradient(135deg, ${moodColor}, ${this.darkenColor(moodColor, 20)})`;
+    }
+  }
+  
+  getRecentCompletionRate() {
+    if (!this.gamification.recentSessions || this.gamification.recentSessions.length === 0) {
+      return 0.5; // Neutral starting point
+    }
+    
+    const completed = this.gamification.recentSessions.filter(s => s.event === 'completed').length;
+    return completed / this.gamification.recentSessions.length;
+  }
+  
+  getMoodColor(completionRate) {
+    // Color transitions based on completion rate
+    if (completionRate >= 0.8) return '#10b981'; // Excellent - Green
+    if (completionRate >= 0.6) return '#3b82f6'; // Good - Blue  
+    if (completionRate >= 0.4) return '#f59e0b'; // Okay - Orange
+    if (completionRate >= 0.2) return '#ef4444'; // Poor - Red
+    return '#6b7280'; // Very poor - Gray
+  }
+  
+  darkenColor(color, percent) {
+    // Simple color darkening function
+    const num = parseInt(color.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = (num >> 16) - amt;
+    const G = (num >> 8 & 0x00FF) - amt;
+    const B = (num & 0x0000FF) - amt;
+    return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+      (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+      (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
   }
   
   // ========== AUDIO SETUP ==========
@@ -177,6 +679,9 @@ class PomodoroTimer {
     this.saveTimerState();
     this.updateTimerWidget();
     this.startTimerInterval();
+    
+    // Show breathing guide for breaks
+    this.showBreathingGuide();
   }
   
   pauseTimer() {
@@ -203,6 +708,11 @@ class PomodoroTimer {
   
   stopTimer() {
     if (this.currentTimer) {
+      // Update mood ring for interrupted session
+      if (this.currentTimer.status === 'running') {
+        this.updateMoodRing('interrupted');
+      }
+      
       this.currentTimer = null;
       this.clearTimerInterval();
       this.updateTimerWidget();
@@ -264,8 +774,13 @@ class PomodoroTimer {
         this.currentTimer.taskTodayPomodoros = updatedStats.completedToday;
       }
       
-      this.showWorkCompleteModal();
-    } else {
+      // Update gamification data
+      this.updateGamificationOnCompletion();
+    
+      // Update mood ring based on completion
+      this.updateMoodRing('completed');
+    
+      this.showWorkCompleteModal();    } else {
       // Break completed - show notification and reset to idle
       chrome.runtime.sendMessage({
         action: 'showNotification',
@@ -326,6 +841,7 @@ class PomodoroTimer {
     
     // Create compact sidebar layout
     this.timerWidget.innerHTML = `
+      <canvas class="pomodoro-particles-canvas"></canvas>
       <div class="pomodoro-timer-content pomodoro-sidebar-layout">
         <div class="pomodoro-timer-circle-compact">
           <svg class="pomodoro-timer-progress" viewBox="0 0 36 36">
@@ -347,10 +863,28 @@ class PomodoroTimer {
         <div class="pomodoro-timer-stats">
           <span class="pomodoro-timer-today">Today <span class="pomodoro-timer-count">0</span></span>
         </div>
+        <div class="pomodoro-gamification-display">
+          <div class="pomodoro-xp-display">
+            <span class="pomodoro-level-badge">L1</span>
+            <div class="pomodoro-xp-bar">
+              <div class="pomodoro-xp-fill" style="width: 0%"></div>
+            </div>
+          </div>
+          <div class="pomodoro-streak-display">
+            <span class="pomodoro-streak-fire">🔥</span>
+            <span class="pomodoro-streak-count">0</span>
+          </div>
+        </div>
+        <div class="pomodoro-pet-display">
+          <span class="pomodoro-pet-emoji">🐱</span>
+          <span class="pomodoro-pet-status">Ready to focus!</span>
+        </div>
       </div>
     `;
     
     this.positionWidget();
+    this.applySeasonalTheme();
+    this.initParticleSystem();
     
     // Ensure highlighting is applied after widget creation
     setTimeout(() => {
@@ -942,6 +1476,79 @@ class PomodoroTimer {
       pauseBtn.classList.remove('primary');
       this.timerWidget.classList.add('paused');
     }
+    
+    // Update gamification display
+    this.updateGamificationDisplay();
+  }
+  
+  updateGamificationDisplay() {
+    if (!this.timerWidget) return;
+    
+    const levelBadge = this.timerWidget.querySelector('.pomodoro-level-badge');
+    const xpFill = this.timerWidget.querySelector('.pomodoro-xp-fill');
+    const streakFire = this.timerWidget.querySelector('.pomodoro-streak-fire');
+    const streakCount = this.timerWidget.querySelector('.pomodoro-streak-count');
+    const petEmoji = this.timerWidget.querySelector('.pomodoro-pet-emoji');
+    const petStatus = this.timerWidget.querySelector('.pomodoro-pet-status');
+    
+    if (levelBadge) {
+      levelBadge.textContent = `L${this.gamification.level}`;
+    }
+    
+    if (xpFill) {
+      const xpInCurrentLevel = this.gamification.xp % 100;
+      xpFill.style.width = `${xpInCurrentLevel}%`;
+    }
+    
+    if (streakFire && streakCount) {
+      streakFire.textContent = this.getStreakEmoji();
+      streakCount.textContent = this.gamification.currentStreak.toString();
+      
+      // Add pulsing animation for active streaks
+      if (this.gamification.currentStreak > 0) {
+        streakFire.classList.add('pomodoro-streak-fire');
+      } else {
+        streakFire.classList.remove('pomodoro-streak-fire');
+      }
+    }
+    
+    // Update productivity pet
+    if (petEmoji && petStatus) {
+      const petData = this.getProductivityPet();
+      petEmoji.textContent = petData.emoji;
+      petStatus.textContent = petData.status;
+    }
+  }
+  
+  getProductivityPet() {
+    const streak = this.gamification.currentStreak;
+    const level = this.gamification.level;
+    const isWorking = this.currentTimer && this.currentTimer.type === 'work' && this.currentTimer.status === 'running';
+    const isOnBreak = this.currentTimer && this.currentTimer.type === 'break';
+    
+    // Pet reacts to current state
+    if (isWorking) {
+      if (streak >= 7) return { emoji: '🦅', status: 'Soaring high!' };
+      if (streak >= 3) return { emoji: '🐺', status: 'In the zone!' };
+      return { emoji: '🐱', status: 'Focusing...' };
+    }
+    
+    if (isOnBreak) {
+      if (streak >= 7) return { emoji: '😴', status: 'Well-earned rest' };
+      return { emoji: '☕', status: 'Recharging...' };
+    }
+    
+    // Pet reacts to overall progress
+    if (streak >= 30) return { emoji: '🦄', status: 'Legendary focus!' };
+    if (streak >= 14) return { emoji: '🦉', status: 'Wise and steady' };
+    if (streak >= 7) return { emoji: '🐉', status: 'On fire!' };
+    if (streak >= 3) return { emoji: '🐯', status: 'Building momentum' };
+    if (level >= 10) return { emoji: '🦁', status: 'Focus master!' };
+    if (level >= 5) return { emoji: '🐺', status: 'Getting stronger' };
+    if (this.gamification.totalSessions >= 10) return { emoji: '🐶', status: 'Good progress!' };
+    if (this.gamification.totalSessions >= 1) return { emoji: '🐱', status: 'Great start!' };
+    
+    return { emoji: '🥚', status: 'Ready to begin!' };
   }
   
   focusTimer() {
