@@ -1,12 +1,24 @@
+/**
+ * Main Pomodoro Timer class that integrates with Todoist interface
+ * Manages timer state, UI widgets, task tracking, and user interactions
+ */
 class PomodoroTimer {
+  /**
+   * Initialize the Pomodoro Timer with default settings and state
+   */
   constructor() {
+    /** @type {Object|null} Current active timer state */
     this.currentTimer = null;
+    /** @type {number|null} Timer interval ID for countdown updates */
     this.timerInterval = null;
+    /** @type {HTMLElement|null} Timer widget DOM element */
     this.timerWidget = null;
+    /** @type {Map<string, Object>} Task history and statistics */
     this.taskHistory = new Map();
+    /** @type {AudioContext|null} Web Audio API context for sound effects */
     this.audioContext = null;
 
-    
+    /** @type {Object} Timer configuration settings */
     this.settings = {
       workDuration: 25, // 25 minutes
       shortBreak: 5,    // 5 minutes
@@ -187,6 +199,10 @@ class PomodoroTimer {
   
   // ========== TIMER CONTROL ==========
   
+  /**
+   * Start a work timer for the specified task
+   * @param {string} taskName - Name of the task to work on
+   */
   startWorkTimer(taskName) {
     const taskId = this.generateTaskHash(taskName);
     const taskStats = this.getTaskStats(taskId);
@@ -1164,6 +1180,11 @@ class PomodoroTimer {
     return stats;
   }
   
+  /**
+   * Generate a unique hash for a task name to use as an identifier
+   * @param {string} text - Task name to hash
+   * @returns {string} Base-36 encoded hash string
+   */
   generateTaskHash(text) {
     let hash = 0;
     for (let i = 0; i < text.length; i++) {

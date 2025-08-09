@@ -1,7 +1,17 @@
+/**
+ * Popup controller for managing extension settings and quick timer functionality
+ * Handles user preferences, settings persistence, and quick timer creation
+ */
 class PopupController {
+  /**
+   * Initialize the popup controller with default settings
+   */
   constructor() {
+    /** @type {Object|null} Current timer state reference */
     this.currentTimer = null;
+    /** @type {number|null} Update interval ID for UI refresh */
     this.updateInterval = null;
+    /** @type {Object} Pomodoro timer settings */
     this.settings = {
       workDuration: 25,
       shortBreak: 5,
@@ -97,6 +107,11 @@ class PopupController {
 
 
 
+  /**
+   * Start a quick timer with specified task name and duration
+   * @param {string} taskName - Name of the task for the timer
+   * @param {number} duration - Timer duration in milliseconds
+   */
   async startQuickTimer(taskName, duration) {
     try {
       const quickTimer = {

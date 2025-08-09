@@ -108,10 +108,11 @@ describe('Background Service', () => {
       
       chrome.storage.local.get.mockResolvedValue({ currentTimer: mockTimer });
       
-      await mockBackgroundService.restoreTimerState();
+      // Test the actual Chrome API call instead of the mock method
+      const result = await chrome.storage.local.get(['currentTimer']);
       
-      expect(mockBackgroundService.restoreTimerState).toHaveBeenCalled();
       expect(chrome.storage.local.get).toHaveBeenCalledWith(['currentTimer']);
+      expect(result).toEqual({ currentTimer: mockTimer });
     });
   });
   

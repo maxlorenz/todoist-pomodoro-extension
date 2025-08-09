@@ -1,17 +1,34 @@
+/**
+ * Background service for managing Pomodoro timer notifications and tab interactions
+ * Handles timer state persistence, notifications, and communication with content scripts
+ */
 class BackgroundService {
+  /**
+   * Initialize the background service
+   */
   constructor() {
+    /** @type {Object|null} Current active timer state */
     this.currentTimer = null;
+    /** @type {string} Notification ID for Chrome notifications API */
     this.notificationId = 'pomodoro-notification';
     
     this.init();
   }
   
+  /**
+   * Initialize background service components
+   * Sets up message listeners, notification handlers, and restores timer state
+   */
   init() {
     this.setupMessageListeners();
     this.setupNotificationListeners();
     this.restoreTimerState();
   }
   
+  /**
+   * Set up message listeners for communication with content scripts and popup
+   * Handles timer events, notification requests, and state queries
+   */
   setupMessageListeners() {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       switch (message.action) {
@@ -60,6 +77,12 @@ class BackgroundService {
     this.clearExistingNotifications();
   }
   
+  /**
+   * Display a Chrome notification with the given title and message
+   * @param {string} title - Notification title
+   * @param {string} message - Notification message
+   * @param {Array<Object>} [buttons=null] - Optional notification buttons
+   */
   async showNotification(title, message, buttons = null) {
     try {
       await this.clearExistingNotifications();

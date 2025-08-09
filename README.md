@@ -1,8 +1,8 @@
 # Todoist Pomodoro Timer Extension
 
-A Chrome extension that seamlessly integrates a Pomodoro timer directly into Todoist's interface, helping you boost productivity and maintain focus using the proven Pomodoro Technique.
+A Chrome extension that seamlessly integrates a Pomodoro timer directly into Todoist's interface, helping you stay focused and productive while managing your tasks.
 
-![Extension Demo](assets/demo-screenshot.png)
+![Extension Demo](assets/icon128.png)
 
 ## 🍅 What is the Pomodoro Technique?
 
@@ -14,22 +14,46 @@ The Pomodoro Technique is a time management method developed by Francesco Cirill
 3. **Take a 5-minute break** to rest and recharge
 4. **Repeat the cycle** - after 4 Pomodoros, take a longer 15-minute break
 
-## Features
+## ✨ Features
 
-- **One-click timer start**: Click any task in Todoist to begin a Pomodoro session
-- **Visual integration**: Timer appears directly in the Todoist interface
-- **Standard Pomodoro technique**: 25-minute work sessions with 5-minute breaks
-- **Task tracking**: Automatically associates timer sessions with specific tasks
-- **Notifications**: Desktop notifications for session completion
-- **Persistent state**: Timer continues running even when switching tabs
+- **Seamless Integration**: Timer widget integrates directly into Todoist's sidebar
+- **Click-to-Start**: Simply click any task to start a focused work session
+- **Visual Feedback**: Selected tasks are highlighted with progress indicators
+- **Smart Notifications**: Desktop notifications for timer completion with break suggestions
+- **Persistent State**: Timer continues running across browser sessions
+- **Customizable Settings**: Adjust work duration, break lengths, and session intervals
+- **Task Statistics**: Track daily and total Pomodoro completions per task
+- **Dark Mode Support**: Automatically adapts to your system theme
 
-## Technology Stack
+## 🚀 Installation
 
-- **Manifest V3**: Latest Chrome extension standard
-- **Vanilla JavaScript**: No external dependencies for core functionality
-- **CSS3**: Modern styling with CSS Grid and Flexbox
-- **Chrome APIs**: Storage, notifications, and tab management
-- **Jest**: Testing framework for unit tests
+### From Chrome Web Store (Recommended)
+*Coming soon - extension will be published to the Chrome Web Store*
+
+### Manual Installation (Development)
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/username/todoist-pomodoro-extension.git
+   cd todoist-pomodoro-extension
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Run tests to ensure everything works:
+   ```bash
+   npm test
+   ```
+
+4. Load the extension in Chrome:
+   - Open Chrome and navigate to `chrome://extensions/`
+   - Enable "Developer mode" in the top right
+   - Click "Load unpacked" and select the project directory
+   - The extension icon should appear in your toolbar
+
+5. Navigate to [Todoist](https://app.todoist.com) to start using the timer!
 
 ## Project Structure
 
