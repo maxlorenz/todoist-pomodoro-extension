@@ -380,82 +380,34 @@ class PomodoroTimer {
     
     this.timerWidget = document.createElement('div');
     this.timerWidget.className = 'pomodoro-timer-widget';
+    
+    // Create compact sidebar layout
     this.timerWidget.innerHTML = `
-      <div class="pomodoro-timer-content">
-        <div class="pomodoro-timer-display">
-          <div class="pomodoro-timer-circle">
-            <svg class="pomodoro-timer-progress" viewBox="0 0 36 36">
-              <path class="pomodoro-timer-bg" d="M18 2.0845a15.9155 15.9155 0 1 1 0 31.831a15.9155 15.9155 0 1 1 0-31.831"/>
-              <path class="pomodoro-timer-fill" d="M18 2.0845a15.9155 15.9155 0 1 1 0 31.831a15.9155 15.9155 0 1 1 0-31.831"/>
-            </svg>
-            <div class="pomodoro-timer-time">25:00</div>
-          </div>
+      <div class="pomodoro-timer-content pomodoro-sidebar-layout">
+        <div class="pomodoro-timer-circle-compact">
+          <svg class="pomodoro-timer-progress" viewBox="0 0 36 36">
+            <path class="pomodoro-timer-bg" d="M18 2.0845a15.9155 15.9155 0 1 1 0 31.831a15.9155 15.9155 0 1 1 0-31.831"/>
+            <path class="pomodoro-timer-fill" d="M18 2.0845a15.9155 15.9155 0 1 1 0 31.831a15.9155 15.9155 0 1 1 0-31.831"/>
+          </svg>
+          <div class="pomodoro-timer-time">25:00</div>
         </div>
         <div class="pomodoro-timer-controls">
           <button class="pomodoro-timer-btn primary pomodoro-timer-pause">Start</button>
           <button class="pomodoro-timer-btn pomodoro-timer-stop">Stop</button>
         </div>
         <div class="pomodoro-timer-task-selector">
+          <label class="pomodoro-timer-task-label">Task:</label>
           <select class="pomodoro-task-dropdown">
             <option value="">Select a task...</option>
           </select>
         </div>
-        <div class="pomodoro-timer-meta">
-          <div class="pomodoro-timer-task-info">
-            <div class="pomodoro-timer-task-name">Select task and click Start</div>
-            <div class="pomodoro-timer-stats">
-              <span class="pomodoro-timer-today">Today: 0</span>
-            </div>
-          </div>
+        <div class="pomodoro-timer-stats">
+          <span class="pomodoro-timer-today">Today <span class="pomodoro-timer-count">0</span></span>
         </div>
       </div>
     `;
     
     this.positionWidget();
-    this.bindTimerEvents();
-  }
-    
-    this.timerWidget = document.createElement('div');
-    this.timerWidget.className = 'pomodoro-timer-widget';
-    this.timerWidget.innerHTML = `
-      <div class="pomodoro-timer-content">
-        <div class="pomodoro-timer-display">
-          <div class="pomodoro-timer-circle">
-            <svg class="pomodoro-timer-progress" viewBox="0 0 36 36">
-              <path class="pomodoro-timer-bg" d="M18 2.0845a15.9155 15.9155 0 1 1 0 31.831a15.9155 15.9155 0 1 1 0-31.831"/>
-              <path class="pomodoro-timer-fill" d="M18 2.0845a15.9155 15.9155 0 1 1 0 31.831a15.9155 15.9155 0 1 1 0-31.831"/>
-            </svg>
-            <div class="pomodoro-timer-time">25:00</div>
-          </div>
-        </div>
-        <div class="pomodoro-timer-controls">
-          <button class="pomodoro-timer-btn primary pomodoro-timer-pause">Start</button>
-          <button class="pomodoro-timer-btn pomodoro-timer-stop">Stop</button>
-        </div>
-        <div class="pomodoro-timer-task-selector">
-          <select class="pomodoro-task-dropdown">
-            <option value="">Select a task...</option>
-          </select>
-        </div>
-        <div class="pomodoro-timer-meta">
-          <div class="pomodoro-timer-task-info">
-            <div class="pomodoro-timer-task-name">Select task and click Start</div>
-            <div class="pomodoro-timer-stats">
-              <span class="pomodoro-timer-today">Today: 0</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    this.setupWidgetControls();
-    this.positionWidget();
-    document.body.appendChild(this.timerWidget);
-    
-
-    
-    this.populateTaskDropdown();
-    this.updateTimerWidget();
     
     // Ensure highlighting is applied after widget creation
     setTimeout(() => {
@@ -634,41 +586,137 @@ class PomodoroTimer {
   }
   
   positionWidget() {
-    // Try to integrate into sidebar first
-    if (this.integrateSidebarWidget()) {
-      return;
-    }
-    
-    // Fallback to fixed positioning if sidebar integration fails
-    document.body.appendChild(this.timerWidget);
-    this.timerWidget.style.position = 'fixed';
-    this.timerWidget.style.top = '20px';
-    this.timerWidget.style.right = '20px';
-    this.timerWidget.style.zIndex = '10000';
+    // Always try to integrate into sidebar
+    this.integrateSidebarWidget();
   }
   
   integrateSidebarWidget() {
-    // Find the sidebar navigation container
-    const sidebar = document.querySelector('nav.fyYNCjm');
-    if (!sidebar) return false;
+    // Wait a bit for the DOM to be ready
+    setTimeout(() => {
+      this.attemptSidebarIntegration();
+    }, 1000);
+    
+    return true; // Always return true to avoid fallback
+  }
+  
+  attemptSidebarIntegration() {
+    console.log('Attempting sidebar integration...');
+    
+    // Debug: Check what navigation elements exist
+    const allNavs = document.querySelectorAll('[role="navigation"]');
+    console.log('Found navigation elements:', allNavs.length);
+    allNavs.forEach((nav, i) => {
+      console.log(`Nav ${i}:`, nav.getAttribute('aria-label'), nav.className);
+    });
+    
+    // Debug: Check for scrollable container
+    const scrollableContainer = document.querySelector('[data-testid="app-sidebar-scrollable-container"]');
+    console.log('Found scrollable container:', !!scrollableContainer);
+    
+    // Find the navigation container that holds both top menu and projects
+    const navContainer = document.querySelector('[role="navigation"][aria-label*="Main Navigation"]') ||
+                         scrollableContainer?.querySelector('[role="navigation"]');
+    if (!navContainer) {
+      console.log('Navigation container not found, retrying...');
+      setTimeout(() => this.attemptSidebarIntegration(), 2000);
+      return;
+    }
+    
+    console.log('Found navigation container:', navContainer);
     
     // Find the top menu (contains Inbox, Today, More)
-    const topMenu = sidebar.querySelector('#top-menu');
-    if (!topMenu) return false;
+    const topMenu = navContainer.querySelector('#top-menu');
+    if (!topMenu) {
+      console.log('Top menu not found, retrying...');
+      setTimeout(() => this.attemptSidebarIntegration(), 2000);
+      return;
+    }
     
-    // Find the My Projects section
-    const projectsSection = sidebar.querySelector('.om0jL2_');
-    if (!projectsSection) return false;
+    console.log('Found top menu:', topMenu);
+    
+    // Find the My Projects section - updated selector for current DOM structure
+    const projectsSection = document.querySelector('.om0jL2_') || 
+                           navContainer.querySelector('[data-expansion-panel-header="true"]')?.parentElement ||
+                           document.querySelector('[aria-label="Projects"]')?.closest('div') ||
+                           document.querySelector('div:has(> div > [data-expansion-panel-header="true"])');
+    
+    console.log('Projects section search results:');
+    console.log('- .om0jL2_:', !!document.querySelector('.om0jL2_'));
+    console.log('- expansion panel:', !!navContainer.querySelector('[data-expansion-panel-header="true"]'));
+    console.log('- aria-label Projects:', !!document.querySelector('[aria-label="Projects"]'));
+    console.log('- Final projectsSection:', !!projectsSection);
+    
+    // Don't require projects section - we can still integrate without it
+    if (projectsSection) {
+      console.log('Found projects section:', projectsSection);
+    } else {
+      console.log('Projects section not found, but continuing with integration...');
+    }
+    
+    // Remove any existing timer container
+    const existingContainer = document.querySelector('.pomodoro-sidebar-container');
+    if (existingContainer) {
+      existingContainer.remove();
+      console.log('Removed existing timer container');
+    }
     
     // Create a container for the timer widget
     const timerContainer = document.createElement('div');
     timerContainer.className = 'pomodoro-sidebar-container';
     timerContainer.appendChild(this.timerWidget);
     
-    // Insert between top menu and projects section
-    projectsSection.parentNode.insertBefore(timerContainer, projectsSection);
+    // Find the best insertion point - try multiple strategies
+    let insertionPoint = null;
+    let insertionParent = null;
     
-    return true;
+    // Strategy 1: Insert before projects section if found
+    if (projectsSection && projectsSection.parentElement) {
+      insertionParent = projectsSection.parentElement;
+      insertionPoint = projectsSection;
+      console.log('Using strategy 1: Insert before projects section');
+    }
+    // Strategy 2: Insert after top menu within the navigation container
+    else if (topMenu && topMenu.parentElement) {
+      insertionParent = topMenu.parentElement;
+      insertionPoint = topMenu.nextElementSibling;
+      console.log('Using strategy 2: Insert after top menu');
+    }
+    // Strategy 3: Insert after top menu in navigation container
+    else if (topMenu && navContainer) {
+      insertionParent = navContainer;
+      insertionPoint = topMenu.nextElementSibling;
+      console.log('Using strategy 3: Insert after top menu in nav container');
+    }
+    // Strategy 4: Append to navigation container
+    else {
+      insertionParent = navContainer;
+      insertionPoint = null;
+      console.log('Using strategy 4: Append to navigation container');
+    }
+    
+    // Insert the timer container
+    if (insertionPoint) {
+      insertionParent.insertBefore(timerContainer, insertionPoint);
+    } else {
+      insertionParent.appendChild(timerContainer);
+    }
+    
+    console.log('Timer widget successfully integrated into sidebar');
+    
+    // Initialize the widget after integration
+    this.populateTaskDropdown();
+    this.updateTimerWidget();
+    this.setupWidgetControls();
+  }
+  
+  fallbackPositioning() {
+    // Fallback to fixed positioning if sidebar integration fails
+    document.body.appendChild(this.timerWidget);
+    this.timerWidget.style.position = 'fixed';
+    this.timerWidget.style.top = '20px';
+    this.timerWidget.style.right = '20px';
+    this.timerWidget.style.zIndex = '10000';
+    console.log('Using fallback fixed positioning');
   }
   
   updateTimerWidget() {
@@ -676,10 +724,10 @@ class PomodoroTimer {
     
     const dropdown = this.timerWidget.querySelector('.pomodoro-task-dropdown');
     const timeElement = this.timerWidget.querySelector('.pomodoro-timer-time');
-    const taskNameElement = this.timerWidget.querySelector('.pomodoro-timer-task-name');
     const todayElement = this.timerWidget.querySelector('.pomodoro-timer-today');
     const pauseBtn = this.timerWidget.querySelector('.pomodoro-timer-pause');
     const fillElement = this.timerWidget.querySelector('.pomodoro-timer-fill');
+    const taskLabel = this.timerWidget.querySelector('.pomodoro-timer-task-label');
     
     // Remove all state classes
     this.timerWidget.classList.remove('state-idle', 'state-work', 'state-break', 'paused');
@@ -690,20 +738,24 @@ class PomodoroTimer {
       console.log('Idle state - work duration:', workMinutes, 'settings:', this.settings);
       const timeDisplay = `${workMinutes.toString().padStart(2, '0')}:00`;
       timeElement.textContent = timeDisplay;
+      
       // Show task stats if a task is selected, otherwise show defaults
       if (dropdown && dropdown.value) {
         const taskId = this.generateTaskHash(dropdown.value);
         const taskStats = this.getTaskStats(taskId);
-        taskNameElement.textContent = dropdown.value;
-        todayElement.textContent = `Today: ${taskStats.completedToday}`;
+        todayElement.innerHTML = `Today <span class="pomodoro-timer-count">${taskStats.completedToday}</span>`;
       } else {
-        taskNameElement.textContent = 'Select task and click Start';
-        todayElement.textContent = 'Today: 0';
+        todayElement.innerHTML = `Today <span class="pomodoro-timer-count">0</span>`;
       }
+      
       pauseBtn.textContent = 'Start';
       pauseBtn.classList.add('primary');
       fillElement.style.strokeDasharray = '0, 100';
+      
+      // Show dropdown and label in idle state
       dropdown.style.display = 'block';
+      dropdown.disabled = false;
+      if (taskLabel) taskLabel.style.display = 'block';
       
       // Reset task progress bar
       this.updateTaskProgressBar(0);
@@ -735,16 +787,19 @@ class PomodoroTimer {
     console.log('Timer display:', timeDisplay, 'minutes:', minutes, 'seconds:', seconds);
     
     timeElement.textContent = timeDisplay;
-    taskNameElement.textContent = this.currentTimer.taskName;
-    todayElement.textContent = `Today: ${this.currentTimer.taskTodayPomodoros || 0}`;
+    todayElement.innerHTML = `Today <span class="pomodoro-timer-count">${this.currentTimer.taskTodayPomodoros || 0}</span>`;
     fillElement.style.strokeDasharray = `${circularProgress}, 100`;
     
     // Update highlighted task progress bar (resets to 0% when paused)
     this.updateTaskProgressBar(taskProgress);
     
-    // Hide dropdown when timer is active, but ensure it has the correct value
+    // Keep dropdown visible but disabled when timer is active
     dropdown.value = this.currentTimer.taskName;
-    dropdown.style.display = 'none';
+    dropdown.style.display = 'block';
+    dropdown.disabled = true;
+    
+    // Hide task label when timer is running
+    if (taskLabel) taskLabel.style.display = 'none';
     
     // Add appropriate state class
     if (this.currentTimer.type === 'work') {

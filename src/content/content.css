@@ -266,6 +266,131 @@
   opacity: 0.8;
 }
 
+/* ========== SIDEBAR INTEGRATION STYLES ========== */
+
+.pomodoro-sidebar-container {
+  padding: 12px 16px;
+  margin: 16px 0;
+}
+
+.pomodoro-sidebar-container .pomodoro-timer-widget {
+  background: transparent;
+  border: none;
+  padding: 0;
+  min-width: auto;
+  max-width: none;
+  width: 100%;
+}
+
+.pomodoro-sidebar-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.pomodoro-sidebar-layout .pomodoro-timer-circle-compact {
+  align-self: center;
+  margin-bottom: 8px;
+}
+
+.pomodoro-timer-circle-compact {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.pomodoro-timer-circle-compact .pomodoro-timer-progress {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.pomodoro-timer-circle-compact .pomodoro-timer-time {
+  position: absolute;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.pomodoro-sidebar-layout .pomodoro-timer-stats {
+  width: 100%;
+  text-align: right;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.pomodoro-sidebar-layout .pomodoro-timer-task-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pomodoro-sidebar-layout .pomodoro-timer-stats {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.pomodoro-sidebar-layout .pomodoro-timer-today {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.pomodoro-timer-count {
+  color: var(--text) !important;
+  font-weight: 500;
+  margin-left: 6px;
+}
+
+.pomodoro-sidebar-layout .pomodoro-timer-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.pomodoro-sidebar-layout .pomodoro-timer-btn {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 12px;
+  height: auto;
+  min-width: auto;
+}
+
+.pomodoro-timer-task-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pomodoro-timer-task-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.pomodoro-sidebar-layout .pomodoro-task-dropdown {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.pomodoro-sidebar-layout .pomodoro-task-dropdown:disabled {
+  background-color: var(--background-secondary);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .pomodoro-modal {
   position: fixed;
   top: 0;
