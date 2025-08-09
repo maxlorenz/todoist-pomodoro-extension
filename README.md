@@ -1,6 +1,18 @@
 # Todoist Pomodoro Timer Extension
 
-A Chrome extension that seamlessly integrates a Pomodoro timer into the Todoist web application. Click on any task to start a focused work session with built-in break reminders.
+A Chrome extension that seamlessly integrates a Pomodoro timer directly into Todoist's interface, helping you boost productivity and maintain focus using the proven Pomodoro Technique.
+
+![Extension Demo](assets/demo-screenshot.png)
+
+## 🍅 What is the Pomodoro Technique?
+
+The Pomodoro Technique is a time management method developed by Francesco Cirillo in the late 1980s. It uses a timer to break work into intervals, traditionally 25 minutes in length, separated by short breaks. The technique helps improve focus, reduce mental fatigue, and maintain consistent productivity throughout the day.
+
+### How it works:
+1. **Choose a task** from your Todoist list
+2. **Work for 25 minutes** (one "Pomodoro") with complete focus
+3. **Take a 5-minute break** to rest and recharge
+4. **Repeat the cycle** - after 4 Pomodoros, take a longer 15-minute break
 
 ## Features
 

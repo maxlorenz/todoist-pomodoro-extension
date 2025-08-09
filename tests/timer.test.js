@@ -1,7 +1,23 @@
+/**
+ * Comprehensive tests for Pomodoro Timer functionality
+ */
+
+// Mock DOM environment
+const mockDOM = () => {
+  document.body.innerHTML = `
+    <div class="task_content">Sample Task 1</div>
+    <div class="task_content">Sample Task 2</div>
+    <div class="task_content">Sample Task 3</div>
+  `;
+};
+
 describe('Pomodoro Timer Logic', () => {
   let mockTimer;
   
   beforeEach(() => {
+    // Setup mock DOM
+    mockDOM();
+    
     mockTimer = {
       taskName: 'Test Task',
       duration: 25 * 60 * 1000, // 25 minutes
@@ -12,21 +28,56 @@ describe('Pomodoro Timer Logic', () => {
       completedSessions: 0
     };
     
+    // Enhanced Chrome API mocks
     global.chrome = {
       storage: {
         local: {
           set: jest.fn().mockResolvedValue({}),
-          get: jest.fn().mockResolvedValue({})
+          get: jest.fn().mockImplementation((keys, callback) => {
+            const mockData = {
+              pomodoroSettings: {
+                workDuration: 25,
+                shortBreak: 5,
+                longBreak: 15,
+                sessionsUntilLongBreak: 4
+              },
+              taskHistory: {},
+              currentTimerState: null
+            };
+            callback(mockData);
+          })
         },
         sync: {
           set: jest.fn().mockResolvedValue({}),
-          get: jest.fn().mockResolvedValue({})
+          get: jest.fn().mockImplementation((keys, callback) => {
+            callback({ pomodoroSettings: {} });
+          })
         }
       },
       runtime: {
         sendMessage: jest.fn().mockResolvedValue({})
       }
     };
+    
+    // Mock audio context
+    global.AudioContext = jest.fn().mockImplementation(() => ({
+      createOscillator: jest.fn(() => ({
+        connect: jest.fn(),
+        frequency: { setValueAtTime: jest.fn() },
+        type: 'sine',
+        start: jest.fn(),
+        stop: jest.fn()
+      })),
+      createGain: jest.fn(() => ({
+        connect: jest.fn(),
+        gain: { 
+          setValueAtTime: jest.fn(),
+          exponentialRampToValueAtTime: jest.fn()
+        }
+      })),
+      destination: {},
+      currentTime: 0
+    }));
   });
   
   afterEach(() => {

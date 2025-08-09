@@ -192,8 +192,8 @@ class PomodoroTimer {
     const taskStats = this.getTaskStats(taskId);
     
     this.currentTimer = {
-      taskId: taskId,
-      taskName: taskName,
+      taskId,
+      taskName,
       duration: this.settings.workDuration * 60 * 1000,
       remaining: this.settings.workDuration * 60 * 1000,
       status: 'running',
@@ -224,7 +224,7 @@ class PomodoroTimer {
     
     this.currentTimer = {
       ...this.currentTimer,
-      duration: duration,
+      duration,
       remaining: duration,
       status: 'running',
       type: breakType,
@@ -447,7 +447,7 @@ class PomodoroTimer {
         if (taskName && taskName.length > 0 && taskName.length < 200) { // Reasonable length check
           tasks.push({
             name: taskName,
-            element: element
+            element
           });
         }
       }
@@ -552,6 +552,18 @@ class PomodoroTimer {
       }
     };
     
+    // Refresh task list when dropdown is clicked/opened
+    dropdown.onclick = () => {
+      console.log('Dropdown clicked - refreshing task list...');
+      this.populateTaskDropdown();
+    };
+    
+    // Also refresh on mousedown for better responsiveness
+    dropdown.onmousedown = () => {
+      console.log('Dropdown mousedown - refreshing task list...');
+      this.populateTaskDropdown();
+    };
+    
     // Refresh dropdown periodically instead of using MutationObserver
     setInterval(() => {
       if (this.timerWidget && !this.currentTimer) {
@@ -653,17 +665,188 @@ class PomodoroTimer {
       console.log('Projects section not found, but continuing with integration...');
     }
     
-    // Remove any existing timer container
-    const existingContainer = document.querySelector('.pomodoro-sidebar-container');
-    if (existingContainer) {
-      existingContainer.remove();
-      console.log('Removed existing timer container');
+    // Remove any existing timer section
+    const existingSection = document.querySelector('.om0jL2_:has(.pomodoro-sidebar-container)') || 
+                           document.querySelector('.pomodoro-sidebar-container')?.closest('.om0jL2_');
+    if (existingSection) {
+      existingSection.remove();
+      console.log('Removed existing timer section');
     }
     
-    // Create a container for the timer widget
+    // Create a collapsible section similar to "My Projects"
+    const timerSection = document.createElement('div');
+    timerSection.className = 'om0jL2_'; // Use same class as projects section
+    
+    // Create the header
+    const headerContainer = document.createElement('div');
+    headerContainer.className = '_19abae45';
+    
+    const header = document.createElement('div');
+    header.setAttribute('data-expansion-panel-header', 'true');
+    header.className = 'odUSdET _19abae45 _7fb159a0 _5912d165';
+    
+    const headerContent = document.createElement('div');
+    headerContent.className = 'RQmSwnk _19abae45 a7c6de33 c4803194 b0e6eab4 cad4e2ec _194d8611 _8ad6a17c _47471e4e f6a2af5a';
+    
+    const headerLink = document.createElement('div');
+    headerLink.className = 'gUmPwCE _19abae45 a7c6de33 cad4e2ec efe72b13 a329dbd3 c76cb3c7 _194d8611 _8ad6a17c d607c41c bfa58fdf _47471e4e f6a2af5a';
+    
+    // Create icon container
+    const iconContainer = document.createElement('span');
+    iconContainer.setAttribute('aria-hidden', 'true');
+    iconContainer.className = 'cirsnYRl6qMjw5oksPFwMOI3K4vDQ_sE';
+    
+    // Create timer/tomato icon (SVG)
+    const icon = document.createElement('svg');
+    icon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    icon.setAttribute('width', '24');
+    icon.setAttribute('height', '24');
+    icon.setAttribute('fill', 'none');
+    icon.setAttribute('viewBox', '0 0 24 24');
+    icon.className = 'Fego6xD';
+    icon.style.color = 'var(--named-color-red)'; // Use red color like a tomato
+    
+    const iconPath = document.createElement('path');
+    iconPath.setAttribute('fill', 'currentColor');
+    iconPath.setAttribute('fill-rule', 'evenodd');
+    iconPath.setAttribute('d', 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z');
+    iconPath.setAttribute('clip-rule', 'evenodd');
+    
+    icon.appendChild(iconPath);
+    iconContainer.appendChild(icon);
+    
+    const headerText = document.createElement('div');
+    headerText.className = '_19abae45 a7c6de33 _194d8611 _1e964f8a _2580a74b _47471e4e';
+    
+    const titleText = document.createElement('div');
+    titleText.className = 'zNp0fi3 a83bd4e0 _7be5c531 _6a3e5ade _2f303ac3 _19abae45 _211eebc7';
+    titleText.textContent = 'Pomodoro Timer';
+    
+    headerText.appendChild(titleText);
+    headerLink.appendChild(iconContainer);
+    headerLink.appendChild(headerText);
+    headerContent.appendChild(headerLink);
+    
+    // Create menu button (like "My projects menu")
+    const menuContainer = document.createElement('div');
+    menuContainer.className = 'utlnQLn _19abae45 b834b77e';
+    
+    const menuButton = document.createElement('button');
+    menuButton.setAttribute('aria-label', 'Pomodoro timer menu');
+    menuButton.setAttribute('aria-expanded', 'false');
+    menuButton.setAttribute('aria-haspopup', 'menu');
+    menuButton.className = '_3930afa0 aa19cb97 _1e29d236 abd5766f';
+    menuButton.type = 'button';
+    menuButton.setAttribute('aria-disabled', 'false');
+    
+    const menuIcon = document.createElement('svg');
+    menuIcon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    menuIcon.setAttribute('width', '24');
+    menuIcon.setAttribute('height', '24');
+    menuIcon.setAttribute('fill', 'none');
+    menuIcon.setAttribute('viewBox', '0 0 24 24');
+    
+    const menuPath = document.createElement('path');
+    menuPath.setAttribute('fill', 'currentColor');
+    menuPath.setAttribute('fill-rule', 'evenodd');
+    menuPath.setAttribute('d', 'M12 6a.46.46 0 0 0-.461.462v5.077H6.462a.462.462 0 1 0 0 .922h5.077v5.077a.461.461 0 1 0 .922 0v-5.077h5.077a.461.461 0 1 0 0-.922h-5.077V6.462A.46.46 0 0 0 12 6');
+    menuPath.setAttribute('clip-rule', 'evenodd');
+    
+    menuIcon.appendChild(menuPath);
+    menuButton.appendChild(menuIcon);
+    menuContainer.appendChild(menuButton);
+    
+    // Add click handler for menu button (placeholder for now)
+    menuButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      console.log('Pomodoro menu clicked - could show settings, statistics, etc.');
+      // TODO: Add menu functionality later
+    });
+    
+    headerContent.appendChild(menuContainer);
+    
+    // Create toggle button
+    const toggleContainer = document.createElement('div');
+    toggleContainer.className = '_19abae45 b834b77e';
+    
+    const toggleButton = document.createElement('button');
+    toggleButton.setAttribute('data-expansion-panel-toggle', 'true');
+    toggleButton.setAttribute('aria-expanded', 'true');
+    toggleButton.setAttribute('aria-controls', 'pomodoro-timer-panel');
+    toggleButton.setAttribute('aria-label', 'Toggle Pomodoro Timer');
+    toggleButton.className = 'HeTy3_a kYbuQSS _3930afa0 aa19cb97 _1e29d236 abd5766f';
+    toggleButton.type = 'button';
+    
+    const toggleIcon = document.createElement('svg');
+    toggleIcon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    toggleIcon.setAttribute('width', '24');
+    toggleIcon.setAttribute('height', '24');
+    toggleIcon.setAttribute('fill', 'none');
+    toggleIcon.setAttribute('viewBox', '0 0 24 24');
+    toggleIcon.className = 'y9T4Cwr';
+    
+    const togglePath = document.createElement('path');
+    togglePath.setAttribute('fill', 'currentColor');
+    togglePath.setAttribute('fill-rule', 'evenodd');
+    togglePath.setAttribute('d', 'M17.854 8.897a.5.5 0 0 0-.708 0L12 14.044 6.854 8.897a.5.5 0 1 0-.708.707l5.5 5.5a.5.5 0 0 0 .708 0l5.5-5.5a.5.5 0 0 0 0-.707');
+    togglePath.setAttribute('clip-rule', 'evenodd');
+    
+    toggleIcon.appendChild(togglePath);
+    toggleButton.appendChild(toggleIcon);
+    toggleContainer.appendChild(toggleButton);
+    
+    headerContent.appendChild(toggleContainer);
+    header.appendChild(headerContent);
+    headerContainer.appendChild(header);
+    
+    // Create the collapsible content container
+    const contentContainer = document.createElement('div');
+    contentContainer.className = '_19abae45';
+    
+    const contentWrapper = document.createElement('div');
+    contentWrapper.className = 'TFkX9lO HB1Xfid _19abae45 _47471e4e';
+    
+    const contentInner = document.createElement('div');
+    contentInner.className = '_19abae45 a7c6de33 _194d8611';
+    
+    const panelContainer = document.createElement('div');
+    panelContainer.className = '_19abae45 _8c75067a';
+    
+    const panel = document.createElement('div');
+    panel.id = 'pomodoro-timer-panel';
+    panel.className = '_19abae45';
+    
+    // Create timer container
     const timerContainer = document.createElement('div');
     timerContainer.className = 'pomodoro-sidebar-container';
     timerContainer.appendChild(this.timerWidget);
+    
+    panel.appendChild(timerContainer);
+    panelContainer.appendChild(panel);
+    contentInner.appendChild(panelContainer);
+    contentWrapper.appendChild(contentInner);
+    contentContainer.appendChild(contentWrapper);
+    
+    // Assemble the complete section
+    timerSection.appendChild(headerContainer);
+    timerSection.appendChild(contentContainer);
+    
+    // Add toggle functionality
+    toggleButton.addEventListener('click', () => {
+      const isExpanded = toggleButton.getAttribute('aria-expanded') === 'true';
+      const newState = !isExpanded;
+      
+      toggleButton.setAttribute('aria-expanded', newState.toString());
+      contentContainer.style.display = newState ? 'block' : 'none';
+      
+      // Rotate the arrow icon
+      toggleIcon.style.transform = newState ? 'rotate(0deg)' : 'rotate(-90deg)';
+      
+      console.log('Pomodoro section toggled:', newState ? 'expanded' : 'collapsed');
+    });
+    
+    // Store reference for later use
+    this.timerSection = timerSection;
     
     // Find the best insertion point - try multiple strategies
     let insertionPoint = null;
@@ -694,11 +877,11 @@ class PomodoroTimer {
       console.log('Using strategy 4: Append to navigation container');
     }
     
-    // Insert the timer container
+    // Insert the timer section
     if (insertionPoint) {
-      insertionParent.insertBefore(timerContainer, insertionPoint);
+      insertionParent.insertBefore(timerSection, insertionPoint);
     } else {
-      insertionParent.appendChild(timerContainer);
+      insertionParent.appendChild(timerSection);
     }
     
     console.log('Timer widget successfully integrated into sidebar');
@@ -745,7 +928,7 @@ class PomodoroTimer {
         const taskStats = this.getTaskStats(taskId);
         todayElement.innerHTML = `Today <span class="pomodoro-timer-count">${taskStats.completedToday}</span>`;
       } else {
-        todayElement.innerHTML = `Today <span class="pomodoro-timer-count">0</span>`;
+        todayElement.innerHTML = 'Today <span class="pomodoro-timer-count">0</span>';
       }
       
       pauseBtn.textContent = 'Start';
@@ -997,29 +1180,29 @@ class PomodoroTimer {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       console.log('Content script received message:', message);
       switch (message.action) {
-        case 'getTimerState':
-          sendResponse(this.getTimerState());
-          break;
-        case 'startQuickTimer':
-          this.startQuickTimer(message.timer);
-          sendResponse({ success: true });
-          break;
-        case 'updateSettings':
-          this.updateSettings(message.settings);
-          sendResponse({ success: true });
-          break;
-        case 'pauseTimer':
-          this.pauseTimer();
-          sendResponse({ success: true });
-          break;
-        case 'stopTimer':
-          this.stopTimer();
-          sendResponse({ success: true });
-          break;
-        case 'resumeTimer':
-          this.resumeTimer();
-          sendResponse({ success: true });
-          break;
+      case 'getTimerState':
+        sendResponse(this.getTimerState());
+        break;
+      case 'startQuickTimer':
+        this.startQuickTimer(message.timer);
+        sendResponse({ success: true });
+        break;
+      case 'updateSettings':
+        this.updateSettings(message.settings);
+        sendResponse({ success: true });
+        break;
+      case 'pauseTimer':
+        this.pauseTimer();
+        sendResponse({ success: true });
+        break;
+      case 'stopTimer':
+        this.stopTimer();
+        sendResponse({ success: true });
+        break;
+      case 'resumeTimer':
+        this.resumeTimer();
+        sendResponse({ success: true });
+        break;
       }
     });
   }
@@ -1104,7 +1287,7 @@ class PomodoroTimer {
         setTimeout(() => {
           this.populateTaskDropdown();
           this.restoreTaskHighlighting();
-    }, 50); // Update 20 times per second for smooth animations        
+        }, 50); // Update 20 times per second for smooth animations        
         // Additional attempt in case the first one fails
         setTimeout(() => {
           this.restoreTaskHighlighting();

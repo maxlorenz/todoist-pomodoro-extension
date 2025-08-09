@@ -1,15 +1,45 @@
 {
   "name": "todoist-pomodoro-extension",
   "version": "1.0.0",
-  "description": "Chrome extension that integrates Pomodoro timer into Todoist",
+  "description": "A Chrome extension that seamlessly integrates a Pomodoro timer into Todoist's interface",
+  "main": "manifest.json",
   "scripts": {
-    "test": "echo 'Tests require Jest installation. Run: npm install jest --save-dev'",
-    "lint": "echo 'Linting requires ESLint installation. Run: npm install eslint --save-dev'",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src/ --ext .js",
+    "lint:fix": "eslint src/ --ext .js --fix",
     "build": "echo 'Extension ready for loading in Chrome!'",
-    "dev": "echo 'Load extension in Chrome from chrome://extensions/ in developer mode'"
+    "dev": "echo 'Load extension in Chrome from chrome://extensions/ in developer mode'",
+    "validate": "npm run lint && npm run test"
   },
-  "devDependencies": {},
-  "keywords": ["chrome-extension", "pomodoro", "todoist", "productivity", "timer"],
-  "author": "Your Name",
-  "license": "MIT"
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "eslint": "^8.57.0",
+    "@eslint/js": "^8.57.0"
+  },
+  "keywords": [
+    "chrome-extension",
+    "pomodoro",
+    "todoist",
+    "productivity",
+    "timer",
+    "time-management",
+    "focus",
+    "browser-extension"
+  ],
+  "author": "Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/todoist-pomodoro-extension.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/todoist-pomodoro-extension/issues"
+  },
+  "homepage": "https://github.com/your-username/todoist-pomodoro-extension#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  }
 }

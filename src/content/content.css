@@ -270,7 +270,35 @@
 
 .pomodoro-sidebar-container {
   padding: 12px 16px;
-  margin: 16px 0;
+  margin: 8px 0;
+}
+
+/* Collapsible section styles */
+.pomodoro-timer-section .y9T4Cwr {
+  transition: transform 0.2s ease;
+}
+
+.pomodoro-timer-section [aria-expanded="false"] .y9T4Cwr {
+  transform: rotate(-90deg);
+}
+
+/* Menu button hover behavior - mimic Todoist's native behavior */
+.utlnQLn {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.odUSdET:hover .utlnQLn,
+.RQmSwnk:hover .utlnQLn {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Ensure the menu button container has proper positioning */
+.utlnQLn._19abae45.b834b77e {
+  display: flex;
+  align-items: center;
 }
 
 .pomodoro-sidebar-container .pomodoro-timer-widget {

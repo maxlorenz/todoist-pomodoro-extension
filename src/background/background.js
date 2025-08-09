@@ -15,15 +15,15 @@ class BackgroundService {
   setupMessageListeners() {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       switch (message.action) {
-        case 'timerStarted':
-          this.handleTimerStarted(message.timer);
-          break;
-        case 'showNotification':
-          this.showNotification(message.title, message.message);
-          break;
-        case 'getBackgroundTimerState':
-          sendResponse({ currentTimer: this.currentTimer });
-          break;
+      case 'timerStarted':
+        this.handleTimerStarted(message.timer);
+        break;
+      case 'showNotification':
+        this.showNotification(message.title, message.message);
+        break;
+      case 'getBackgroundTimerState':
+        sendResponse({ currentTimer: this.currentTimer });
+        break;
       }
     });
   }
@@ -67,8 +67,8 @@ class BackgroundService {
       const options = {
         type: 'basic',
         iconUrl: 'assets/icon48.png',
-        title: title,
-        message: message,
+        title,
+        message,
         priority: 2,
         requireInteraction: true
       };

@@ -1,11 +1,15 @@
 # Agent Guidelines for Todoist Pomodoro Extension
 
 ## Build/Test Commands
-- **Test**: `npm test` (requires Jest: `npm install jest --save-dev`)
-- **Lint**: `npm run lint` (requires ESLint: `npm install eslint --save-dev`)
+- **Test**: `npm test` (Jest configured and ready)
+- **Test Watch**: `npm run test:watch` (continuous testing during development)
+- **Test Coverage**: `npm run test:coverage` (generate coverage reports)
+- **Lint**: `npm run lint` (ESLint configured and ready)
+- **Lint Fix**: `npm run lint:fix` (automatically fix linting issues)
 - **Build**: `npm run build` (extension ready for Chrome loading)
+- **Validate**: `npm run validate` (runs both linting and tests)
 - **Dev**: Load extension from `chrome://extensions/` in developer mode
-- **Single test**: `npm test -- --testNamePattern="test name"` (after Jest setup)
+- **Single test**: `npm test -- --testNamePattern="test name"`
 
 ## Code Style Guidelines
 - **Classes**: Use ES6 classes with PascalCase (e.g., `PomodoroTimer`, `BackgroundService`)
