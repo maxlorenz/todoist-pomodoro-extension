@@ -34,7 +34,6 @@ class PomodoroTimer {
     await this.loadTaskHistory();
 
     this.setupAudio();
-    this.setupTaskClickListeners();
     this.setupMessageListener();
     await this.restoreTimerState();
     
@@ -122,80 +121,8 @@ class PomodoroTimer {
     }
   }
   
-  // ========== TASK CLICK HANDLING ==========
-  
-  setupTaskClickListeners() {
-    document.addEventListener('click', (event) => {
-      // Skip if clicking inside our timer widget
-      if (event.target.closest('.pomodoro-timer-widget')) {
-        return;
-      }
-      
-      const taskContent = event.target.closest('.task_content');
-      if (taskContent) {
-        event.preventDefault();
-        event.stopPropagation();
-        
-        const taskName = taskContent.textContent.trim();
-        if (taskName && taskName.length > 0) {
-          console.log('Task clicked:', taskName);
-          this.handleTaskClick(taskName);
-        }
-      }
-    }, true);
-  }
-  
-  handleTaskClick(taskName) {
-    if (this.currentTimer && this.currentTimer.status === 'running') {
-      // If timer is running, ask what to do
-      this.showTaskSwitchModal(taskName);
-    } else {
-      // Start new timer and update dropdown
-      this.startWorkTimer(taskName);
-      
-      // Update dropdown to reflect the selected task
-      const dropdown = this.timerWidget?.querySelector('.pomodoro-task-dropdown');
-      if (dropdown) {
-        dropdown.value = taskName;
-      }
-    }
-  }
-  
-  showTaskSwitchModal(newTaskName) {
-    const currentTaskName = this.currentTimer.taskName;
-    
-    if (currentTaskName === newTaskName) {
-      // Same task, just focus the timer
-      this.focusTimer();
-      return;
-    }
-    
-    const modal = this.createModal([
-      {
-        text: `Continue "${currentTaskName}"`,
-        action: () => this.focusTimer()
-      },
-      {
-        text: `Switch to "${newTaskName}"`,
-        action: () => {
-          this.stopTimer();
-          this.startWorkTimer(newTaskName);
-          
-          // Update dropdown to reflect the new task
-          const dropdown = this.timerWidget?.querySelector('.pomodoro-task-dropdown');
-          if (dropdown) {
-            dropdown.value = newTaskName;
-          }
-        }
-      },
-      {
-        text: 'Cancel',
-        action: () => {}
-      }
-    ]);
-    
-    document.body.appendChild(modal);
-  }
+  // ========== TASK CLICK HANDLING REMOVED ==========
+  // Task clicking functionality has been removed to avoid interfering with Todoist's normal behavior
   
   // ========== TIMER CONTROL ==========
   
@@ -601,7 +528,7 @@ class PomodoroTimer {
         action: () => {}
       },
       {
-        text: '2. Or click directly on any existing task',
+        text: '2. Refresh the page and try again',
         action: () => {}
       },
       {
