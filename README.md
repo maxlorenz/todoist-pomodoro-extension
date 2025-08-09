@@ -4,6 +4,11 @@ A Chrome extension that seamlessly integrates a Pomodoro timer directly into Tod
 
 ![Extension Demo](assets/icon128.png)
 
+<img width="458" height="203" alt="image" src="https://github.com/user-attachments/assets/e4a4db9b-ff37-4bf0-a24a-23be8aedcf8f" />
+<img width="207" height="338" alt="image" src="https://github.com/user-attachments/assets/041ba140-b7c3-46af-b0fe-ac14b749423f" />
+
+
+
 ## 🍅 What is the Pomodoro Technique?
 
 The Pomodoro Technique is a time management method developed by Francesco Cirillo in the late 1980s. It uses a timer to break work into intervals, traditionally 25 minutes in length, separated by short breaks. The technique helps improve focus, reduce mental fatigue, and maintain consistent productivity throughout the day.
