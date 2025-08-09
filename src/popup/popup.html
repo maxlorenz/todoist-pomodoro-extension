@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pomodoro</title>
+  <link rel="stylesheet" href="popup.css"/>
+</head>
+<body>
+  <div class="popup">
+    <header class="header">
+      <h1 class="title" aria-label="Pomodoro">Pomodoro</h1>
+      <span class="brand-dot" aria-hidden="true"></span>
+    </header>
+
+    <main class="main">
+      <!-- QUICK START -->
+      <section class="block">
+        <div class="block-title">Start Timer</div>
+        <div class="grid">
+          <button id="quick-25" class="btn btn-primary">25 min Work</button>
+          <button id="quick-5" class="btn btn-surface">5 min Break</button>
+          <button id="quick-15" class="btn btn-surface">15 min Break</button>
+        </div>
+      </section>
+
+
+
+      <!-- SETTINGS -->
+      <section class="block">
+        <div class="block-title">Settings</div>
+        <div class="form">
+          <label class="field">
+            <span>Work duration (min)</span>
+            <input id="work-duration" type="number" min="1" max="60" value="25" />
+          </label>
+          <label class="field">
+            <span>Short break (min)</span>
+            <input id="short-break" type="number" min="1" max="30" value="5" />
+          </label>
+          <label class="field">
+            <span>Long break (min)</span>
+            <input id="long-break" type="number" min="1" max="60" value="15" />
+          </label>
+          <label class="field">
+            <span>Sessions until long break</span>
+            <input id="sessions-until-long" type="number" min="1" max="10" value="4" />
+          </label>
+        </div>
+        <div class="right">
+          <button id="save-settings" class="btn btn-primary">Save</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span class="muted">Fits right into Todoist. Minimal. Focused.</span>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
+

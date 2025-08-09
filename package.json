@@ -1,0 +1,15 @@
+{
+  "name": "todoist-pomodoro-extension",
+  "version": "1.0.0",
+  "description": "Chrome extension that integrates Pomodoro timer into Todoist",
+  "scripts": {
+    "test": "echo 'Tests require Jest installation. Run: npm install jest --save-dev'",
+    "lint": "echo 'Linting requires ESLint installation. Run: npm install eslint --save-dev'",
+    "build": "echo 'Extension ready for loading in Chrome!'",
+    "dev": "echo 'Load extension in Chrome from chrome://extensions/ in developer mode'"
+  },
+  "devDependencies": {},
+  "keywords": ["chrome-extension", "pomodoro", "todoist", "productivity", "timer"],
+  "author": "Your Name",
+  "license": "MIT"
+}

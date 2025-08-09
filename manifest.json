@@ -1,0 +1,54 @@
+{
+  "manifest_version": 3,
+  "name": "Todoist Pomodoro Timer",
+  "version": "1.0.0",
+  "description": "Integrate a Pomodoro timer directly into Todoist. Click any task to start a focused work session.",
+  
+  "permissions": [
+    "storage",
+    "notifications",
+    "activeTab"
+  ],
+  
+  "host_permissions": [
+    "https://app.todoist.com/*"
+  ],
+  
+  "background": {
+    "service_worker": "src/background/background.js"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["https://app.todoist.com/*"],
+      "js": ["src/content/content.js"],
+      "css": ["src/content/content.css"],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "Pomodoro Timer",
+    "default_icon": {
+      "16": "assets/icon16.png",
+      "32": "assets/icon32.png",
+      "48": "assets/icon48.png",
+      "128": "assets/icon128.png"
+    }
+  },
+  
+  "icons": {
+    "16": "assets/icon16.png",
+    "32": "assets/icon32.png",
+    "48": "assets/icon48.png",
+    "128": "assets/icon128.png"
+  },
+  
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*"],
+      "matches": ["https://app.todoist.com/*"]
+    }
+  ]
+}
