@@ -146,7 +146,7 @@
   stroke-width: 2.25;
   stroke-linecap: round;
   stroke-dasharray: 0, 100;
-  transition: stroke-dasharray 0.5s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.3s ease;
+  transition: stroke 0.3s ease;
 }
 
 .pomodoro-timer-widget.paused .pomodoro-timer-fill {
@@ -342,48 +342,35 @@
   --pomodoro-accent-ink: #b53024;
   --pomodoro-accent-soft: rgba(233, 76, 61, 0.10);
   --pomodoro-accent-soft-2: rgba(233, 76, 61, 0.06);
-  
   position: relative !important;
-  background: linear-gradient(0deg, var(--pomodoro-accent-soft) 0%, var(--pomodoro-accent-soft-2) 100%), var(--surface, #ffffff) !important;
-  border: 1px solid rgba(233, 76, 61, 0.22) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 1px 0 rgba(0,0,0,0.02), 0 6px 20px rgba(233, 76, 61, 0.10) !important;
-  transition: box-shadow 0.25s ease, border-color 0.25s ease, background-color 0.25s ease !important;
-  animation: pomodoroBreath 6s ease-in-out infinite !important;
-  margin-left: 0 !important;
-  padding: 12px 14px 16px 14px !important;
+  background: linear-gradient(0deg, var(--pomodoro-accent-soft) 0%, var(--pomodoro-accent-soft-2) 100%), rgb(250, 250, 250) !important;
+  border: 1px solid rgba(233, 76, 61, 0.3) !important;
+  overflow: hidden !important;
 }
 
-/* Inset accent rail - never bleeds to the outside */
-.pomodoro-selected-task::before {
+/* Make task text bold */
+.pomodoro-selected-task .task_content {
+  font-weight: 600 !important;
+}
+
+/* Top progress bar fill - shows timer progress */
+.pomodoro-selected-task::after {
   content: "" !important;
   position: absolute !important;
-  left: 8px !important;
-  top: 8px !important;
-  bottom: 8px !important;
-  width: 4px !important;
-  border-radius: 999px !important;
-  background: linear-gradient(180deg, var(--pomodoro-accent) 0%, var(--pomodoro-accent-ink) 100%) !important;
-  box-shadow: 0 0 0 1px rgba(233, 76, 61, 0.15) inset !important;
-  opacity: 0.95 !important;
-  animation: pomodoroRailShimmer 3.5s ease-in-out infinite !important;
+  left: 0 !important;
+  top: 0 !important;
+  height: 1px !important;
+  background: rgba(233, 76, 61, 0.6) !important;
+  opacity: 1 !important;
+  width: var(--pomodoro-progress, 0%) !important;
+  transition: width 0.1s ease !important;
 }
 
 
 
-/* Breathing animation */
-@keyframes pomodoroBreath {
-  0% { box-shadow: 0 1px 0 rgba(0,0,0,0.02), 0 6px 20px rgba(233, 76, 61, 0.08); }
-  50% { box-shadow: 0 1px 0 rgba(0,0,0,0.02), 0 8px 26px rgba(233, 76, 61, 0.12); }
-  100% { box-shadow: 0 1px 0 rgba(0,0,0,0.02), 0 6px 20px rgba(233, 76, 61, 0.08); }
-}
 
-/* Rail shimmer animation */
-@keyframes pomodoroRailShimmer {
-  0% { filter: brightness(1); }
-  50% { filter: brightness(1.06); }
-  100% { filter: brightness(1); }
-}
+
+
 
 /* Hover states */
 .pomodoro-selected-task:hover {
@@ -397,42 +384,21 @@
     --pomodoro-accent-ink: #ff5744;
     --pomodoro-accent-soft: rgba(255, 106, 90, 0.12);
     --pomodoro-accent-soft-2: rgba(255, 106, 90, 0.06);
+    
+    background: linear-gradient(0deg, var(--pomodoro-accent-soft) 0%, var(--pomodoro-accent-soft-2) 100%), rgb(250, 250, 250) !important;
+    border: 1px solid rgba(255, 106, 90, 0.3) !important;
   }
   
-  .pomodoro-selected-task {
-    background: linear-gradient(0deg, var(--pomodoro-accent-soft) 0%, var(--pomodoro-accent-soft-2) 100%), var(--surface, #0b0f14) !important;
-    border: 1px solid rgba(255, 106, 90, 0.22) !important;
-    box-shadow: 0 1px 0 rgba(255,255,255,0.02), 0 6px 20px rgba(255, 106, 90, 0.10) !important;
-  }
-  
-  .pomodoro-selected-task::before {
-    background: linear-gradient(180deg, var(--pomodoro-accent) 0%, var(--pomodoro-accent-ink) 100%) !important;
-    box-shadow: 0 0 0 1px rgba(255, 106, 90, 0.15) inset !important;
+  .pomodoro-selected-task::after {
+    background: rgba(255, 106, 90, 0.6) !important;
   }
   
 
   
-  @keyframes pomodoroBreath {
-    0% { box-shadow: 0 1px 0 rgba(255,255,255,0.02), 0 6px 20px rgba(255, 106, 90, 0.08); }
-    50% { box-shadow: 0 1px 0 rgba(255,255,255,0.02), 0 8px 26px rgba(255, 106, 90, 0.12); }
-    100% { box-shadow: 0 1px 0 rgba(255,255,255,0.02), 0 6px 20px rgba(255, 106, 90, 0.08); }
-  }
-  
-  .pomodoro-selected-task:hover {
-    border-color: rgba(255, 106, 90, 0.35) !important;
-  }
+
 }
 
-/* Respect users who prefer less motion */
-@media (prefers-reduced-motion: reduce) {
-  .pomodoro-selected-task, 
-  .pomodoro-selected-task::before { 
-    animation: none !important; 
-  }
-  .pomodoro-selected-task .pomodoro-progress::after { 
-    transition: none !important; 
-  }
-}
+
 
 /* Dark mode styles */
 @media (prefers-color-scheme: dark) {

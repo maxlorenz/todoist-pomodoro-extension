@@ -238,6 +238,9 @@ class PomodoroTimer {
   
   pauseTimer() {
     if (this.currentTimer && this.currentTimer.status === 'running') {
+      // Update remaining time before pausing
+      const elapsed = Date.now() - this.currentTimer.startTime;
+      this.currentTimer.remaining = Math.max(0, this.currentTimer.duration - elapsed);
       this.currentTimer.status = 'paused';
       this.clearTimerInterval();
       this.updateTimerWidget();
@@ -288,7 +291,7 @@ class PomodoroTimer {
           this.updateTimerWidget();
         }
       }
-    }, 1000);
+    }, 50); // Update 20 times per second for smooth animations
   }
   
   clearTimerInterval() {
@@ -634,6 +637,9 @@ class PomodoroTimer {
       fillElement.style.strokeDasharray = '0, 100';
       dropdown.style.display = 'block';
       
+      // Reset task progress bar
+      this.updateTaskProgressBar(0);
+      
       // Add idle state class
       this.timerWidget.classList.add('state-idle');
       
@@ -652,13 +658,21 @@ class PomodoroTimer {
     const minutes = Math.floor(this.currentTimer.remaining / 60000);
     const seconds = Math.floor((this.currentTimer.remaining % 60000) / 1000);
     const timeDisplay = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    const progress = ((this.currentTimer.duration - this.currentTimer.remaining) / this.currentTimer.duration) * 100;
+    // Calculate circular progress: always show current progress regardless of status
+    const circularProgress = ((this.currentTimer.duration - this.currentTimer.remaining) / this.currentTimer.duration) * 100;
+    
+    // Task progress bar: only show progress when running, 0% when paused
+    const taskProgress = this.currentTimer.status === 'running' ? circularProgress : 0;
+    
     console.log('Timer display:', timeDisplay, 'minutes:', minutes, 'seconds:', seconds);
     
     timeElement.textContent = timeDisplay;
     taskNameElement.textContent = this.currentTimer.taskName;
     todayElement.textContent = `Today: ${this.currentTimer.taskTodayPomodoros || 0}`;
-    fillElement.style.opacity = progress > 0 ? '0.95' : '0';
+    fillElement.style.strokeDasharray = `${circularProgress}, 100`;
+    
+    // Update highlighted task progress bar (resets to 0% when paused)
+    this.updateTaskProgressBar(taskProgress);
     
     // Hide dropdown when timer is active, but ensure it has the correct value
     dropdown.value = this.currentTimer.taskName;
@@ -708,27 +722,42 @@ class PomodoroTimer {
     });
     
     if (targetTaskElement) {
-      // Find the outermost task container - look for the div that contains both checkbox and content
+      // Find the task_list_item__body container
       let taskContainer = targetTaskElement;
       let attempts = 0;
       const maxAttempts = 15;
       
-      // Traverse up to find the main task container that has both checkbox and content
+      // Traverse up to find the task_list_item__body element
       while (taskContainer && attempts < maxAttempts) {
-        const parent = taskContainer.parentElement;
-        if (!parent) break;
-        
-        // Look for a container that has both task_checkbox and task content
-        const hasCheckbox = parent.querySelector('.task_checkbox');
-        const hasContent = parent.querySelector('.task_content');
-        
-        if (hasCheckbox && hasContent) {
-          taskContainer = parent;
+        if (taskContainer.classList && taskContainer.classList.contains('task_list_item__body')) {
           break;
         }
-        
-        taskContainer = parent;
+        taskContainer = taskContainer.parentElement;
         attempts++;
+      }
+      
+      // If we didn't find task_list_item__body, fall back to the old logic
+      if (!taskContainer || !taskContainer.classList.contains('task_list_item__body')) {
+        taskContainer = targetTaskElement;
+        attempts = 0;
+        
+        // Traverse up to find the main task container that has both checkbox and content
+        while (taskContainer && attempts < maxAttempts) {
+          const parent = taskContainer.parentElement;
+          if (!parent) break;
+          
+          // Look for a container that has both task_checkbox and task content
+          const hasCheckbox = parent.querySelector('.task_checkbox');
+          const hasContent = parent.querySelector('.task_content');
+          
+          if (hasCheckbox && hasContent) {
+            taskContainer = parent;
+            break;
+          }
+          
+          taskContainer = parent;
+          attempts++;
+        }
       }
       
       // Apply highlighting - just the visual styling, no content modification
@@ -753,6 +782,15 @@ class PomodoroTimer {
     highlightedTasks.forEach(task => {
       task.classList.remove('pomodoro-selected-task');
     });
+  }
+  
+  updateTaskProgressBar(progress) {
+    // Update the progress bar on the highlighted task
+    const highlightedTask = document.querySelector('.pomodoro-selected-task');
+    if (highlightedTask) {
+      // Set CSS custom property for progress width
+      highlightedTask.style.setProperty('--pomodoro-progress', `${progress}%`);
+    }
   }
   
   // ========== MODAL CREATION ==========
@@ -943,8 +981,7 @@ class PomodoroTimer {
         setTimeout(() => {
           this.populateTaskDropdown();
           this.restoreTaskHighlighting();
-        }, 1000);
-        
+    }, 50); // Update 20 times per second for smooth animations        
         // Additional attempt in case the first one fails
         setTimeout(() => {
           this.restoreTaskHighlighting();
