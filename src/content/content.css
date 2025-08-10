@@ -606,3 +606,156 @@
     background: #1a1a1a;
   }
 }
+
+/* ========== DEEP WORK MODES ========== */
+
+/* Minimal Mode - Ultra-clean, distraction-free design */
+.pomodoro-timer-widget.deep-work-minimal {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 16px;
+  min-width: 180px;
+  max-width: 200px;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+}
+
+.pomodoro-minimal-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.pomodoro-minimal-task {
+  width: 100%;
+  text-align: center;
+}
+
+.pomodoro-minimal-task .pomodoro-task-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pomodoro-minimal-time {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+  text-align: center;
+}
+
+.pomodoro-minimal-controls {
+  display: flex;
+  justify-content: center;
+}
+
+.pomodoro-minimal-controls .pomodoro-timer-btn {
+  background: #111827;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.pomodoro-minimal-controls .pomodoro-timer-btn:hover {
+  background: #374151;
+}
+
+.pomodoro-minimal-dropdown {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 11px;
+  font-family: inherit;
+}
+
+.pomodoro-minimal-dropdown:focus {
+  outline: none;
+  border-color: #111827;
+}
+
+/* Invisible Mode - Completely hidden during work, only shows on hover */
+.pomodoro-timer-widget.deep-work-invisible {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.pomodoro-timer-widget.deep-work-invisible:hover {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Show invisible timer when not in active work session */
+.pomodoro-timer-widget.deep-work-invisible.state-idle,
+.pomodoro-timer-widget.deep-work-invisible.state-break {
+  opacity: 0.7;
+  pointer-events: auto;
+}
+
+.pomodoro-timer-widget.deep-work-invisible.state-idle:hover,
+.pomodoro-timer-widget.deep-work-invisible.state-break:hover {
+  opacity: 1;
+}
+
+/* Deep work focus state - even more minimal during active work */
+.pomodoro-timer-widget.deep-work-minimal.state-work {
+  border-color: #111827;
+}
+
+.pomodoro-timer-widget.deep-work-minimal.state-work .pomodoro-minimal-task {
+  display: none; /* Hide task name during work to reduce distraction */
+}
+
+.pomodoro-timer-widget.deep-work-minimal.state-work .pomodoro-minimal-dropdown {
+  display: none; /* Hide dropdown during work */
+}
+
+/* Dark mode for minimal design */
+@media (prefers-color-scheme: dark) {
+  .pomodoro-timer-widget.deep-work-minimal {
+    background: #111827;
+    border-color: #374151;
+  }
+  
+  .pomodoro-minimal-task .pomodoro-task-name {
+    color: #f9fafb;
+  }
+  
+  .pomodoro-minimal-time {
+    color: #f9fafb;
+  }
+  
+  .pomodoro-minimal-controls .pomodoro-timer-btn {
+    background: #f9fafb;
+    color: #111827;
+  }
+  
+  .pomodoro-minimal-controls .pomodoro-timer-btn:hover {
+    background: #e5e7eb;
+  }
+  
+  .pomodoro-minimal-dropdown {
+    background: #111827;
+    color: #f9fafb;
+    border-color: #374151;
+  }
+  
+  .pomodoro-minimal-dropdown:focus {
+    border-color: #f9fafb;
+  }
+}
